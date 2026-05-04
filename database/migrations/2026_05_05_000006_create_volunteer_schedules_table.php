@@ -34,7 +34,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
-            $table->unique(['volunteer_schedule_id', 'volunteer_id']);
+            $table->unique(['volunteer_schedule_id', 'volunteer_id'], 'vol_sched_user_unique');
         });
     }
 
