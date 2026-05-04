@@ -19,6 +19,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\DonationReceived::class,
+            \App\Listeners\SendDonationConfirmation::class,
+        );
+
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\DonationReceived::class,
+            \App\Listeners\GenerateDonationCertificate::class,
+        );
     }
 }

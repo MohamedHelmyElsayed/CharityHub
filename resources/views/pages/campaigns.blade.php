@@ -32,52 +32,6 @@
 </div>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gray-50">
-    @php
-    $campaigns = [
-        [
-            'title' => 'Clean Water Initiative',
-            'description' => 'Help us build wells in rural communities to provide access to clean and safe drinking water for thousands of families.',
-            'goal' => 50000,
-            'raised' => 32500,
-            'image' => 'https://images.unsplash.com/photo-1541888001694-0f36792cdba5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-        ],
-        [
-            'title' => 'Education for All',
-            'description' => 'Providing school supplies, books, and uniforms to underprivileged children to ensure they get the education they deserve.',
-            'goal' => 25000,
-            'raised' => 18000,
-            'image' => 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-        ],
-        [
-            'title' => 'Disaster Relief Fund',
-            'description' => 'Emergency response fund to provide immediate shelter, food, and medical supplies to victims of natural disasters.',
-            'goal' => 100000,
-            'raised' => 85000,
-            'image' => 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-        ],
-        [
-            'title' => 'Help Children Combat Hunger',
-            'description' => 'Providing nutritious meals to children in poverty-stricken areas. Your donation can feed a child for a whole month.',
-            'goal' => 15000,
-            'raised' => 5000,
-            'image' => 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-        ],
-        [
-            'title' => 'Wildlife Conservation Project',
-            'description' => 'Protecting endangered species and preserving their natural habitats from deforestation and poaching.',
-            'goal' => 40000,
-            'raised' => 12000,
-            'image' => 'https://images.unsplash.com/photo-1516426122078-c23e76319801?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-        ],
-        [
-            'title' => 'Medical Assistance for Seniors',
-            'description' => 'Covering essential medical treatments and medicines for elderly individuals who cannot afford healthcare.',
-            'goal' => 30000,
-            'raised' => 28500,
-            'image' => 'https://images.unsplash.com/photo-1516826957135-700ede19c6ce?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-        ]
-    ];
-    @endphp
 
     <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         @foreach($campaigns as $campaign)

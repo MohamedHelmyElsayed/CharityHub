@@ -3,17 +3,6 @@
 @section('title', 'Campaign Details')
 
 @section('content')
-@php
-    $campaign = [
-        'title' => 'Clean Water Initiative for Rural Villages',
-        'description' => "Access to clean water is a basic human right, yet thousands of families in rural areas still walk miles every day to fetch water that is often unsafe to drink. Our initiative aims to drill deep-water wells and install solar-powered pumps in 10 villages, providing a sustainable and clean water source for over 5,000 people. \n\nWith your support, we can eradicate waterborne diseases, improve sanitation, and allow children—especially girls—to attend school instead of spending their days collecting water. Every dollar brings us closer to a healthier, brighter future for these communities.\n\nJoin us in our mission to change lives, one well at a time. The impact of your donation will last for generations.",
-        'goal' => 50000,
-        'raised' => 32500,
-        'image' => 'https://images.unsplash.com/photo-1541888001694-0f36792cdba5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-        'donors' => 458,
-        'days_left' => 12
-    ];
-@endphp
 
 <div class="bg-gray-50 py-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -30,10 +19,10 @@
             <div class="lg:col-span-2 space-y-8">
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="relative h-96">
-                        <img src="{{ $campaign['image'] }}" alt="{{ $campaign['title'] }}" class="w-full h-full object-cover">
+                        <img src="{{ $campaign->image ? asset('storage/' . $campaign->image) : 'https://images.unsplash.com/photo-1541888001694-0f36792cdba5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80' }}" alt="{{ $campaign->title }}" class="w-full h-full object-cover">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                         <h1 class="absolute bottom-6 left-8 right-8 text-3xl md:text-4xl font-extrabold text-white leading-tight">
-                            {{ $campaign['title'] }}
+                            {{ $campaign->title }}
                         </h1>
                     </div>
                     
@@ -44,7 +33,7 @@
                         </div>
                         
                         <div class="prose max-w-none text-gray-600 leading-relaxed">
-                            {!! nl2br(e($campaign['description'])) !!}
+                            {!! nl2br(e($campaign->description)) !!}
                         </div>
 
                         <div class="mt-10 pt-8 border-t border-gray-100">
@@ -67,24 +56,24 @@
                 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 sticky top-24">
                     <div class="mb-8">
                         <div class="flex items-end mb-2">
-                            <span class="text-4xl font-extrabold text-gray-900">${{ number_format($campaign['raised']) }}</span>
-                            <span class="text-lg text-gray-500 ml-2 mb-1">raised of ${{ number_format($campaign['goal']) }}</span>
+                            <span class="text-4xl font-extrabold text-gray-900">${{ number_format($campaign->current_amount) }}</span>
+                            <span class="text-lg text-gray-500 ml-2 mb-1">raised of ${{ number_format($campaign->goal_amount) }}</span>
                         </div>
-                        <x-progress-bar :goal="$campaign['goal']" :raised="$campaign['raised']" />
+                        <x-progress-bar :goal="$campaign->goal_amount" :raised="$campaign->current_amount" />
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4 text-center mb-8">
                         <div class="bg-gray-50 border border-gray-100 p-4 rounded-xl">
-                            <span class="block text-2xl font-bold text-gray-900">{{ $campaign['donors'] }}</span>
+                            <span class="block text-2xl font-bold text-gray-900">{{ $campaign->donations()->where('status', 'completed')->distinct('user_id')->count() }}</span>
                             <span class="text-sm font-medium text-gray-500">Donors</span>
                         </div>
                         <div class="bg-gray-50 border border-gray-100 p-4 rounded-xl">
-                            <span class="block text-2xl font-bold text-gray-900">{{ $campaign['days_left'] }}</span>
+                            <span class="block text-2xl font-bold text-gray-900">{{ now()->diffInDays($campaign->deadline, false) > 0 ? now()->diffInDays($campaign->deadline) : 0 }}</span>
                             <span class="text-sm font-medium text-gray-500">Days Left</span>
                         </div>
                     </div>
                     
-                    <a href="{{ route('donate') }}" class="w-full flex items-center justify-center px-8 py-4 border border-transparent text-xl font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-500/30 transition transform hover:-translate-y-1">
+                    <a href="{{ route('donate') }}?campaign={{ $campaign->id }}" class="w-full flex items-center justify-center px-8 py-4 border border-transparent text-xl font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-500/30 transition transform hover:-translate-y-1">
                         Donate Now
                     </a>
                     
@@ -96,23 +85,25 @@
                     <div class="mt-8 pt-8 border-t border-gray-100">
                         <h3 class="font-bold text-gray-900 mb-6 text-lg">Recent Donations</h3>
                         <ul class="space-y-5">
-                            @foreach([['name' => 'Anonymous', 'amount' => 100, 'time' => '2 mins ago'], ['name' => 'Sarah J.', 'amount' => 50, 'time' => '1 hour ago'], ['name' => 'Michael B.', 'amount' => 250, 'time' => '3 hours ago']] as $donation)
+                            @forelse($campaign->donations()->with('user')->where('status', 'completed')->latest()->take(5)->get() as $donation)
                             <li class="flex items-center justify-between">
                                 <div class="flex items-center space-x-4">
                                     <div class="bg-primary-50 border border-primary-100 rounded-full p-3">
                                         <svg class="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
                                     </div>
                                     <div>
-                                        <p class="text-base font-bold text-gray-900">{{ $donation['name'] }}</p>
+                                        <p class="text-base font-bold text-gray-900">{{ $donation->user ? $donation->user->name : 'Anonymous' }}</p>
                                         <div class="flex items-center text-sm font-medium text-gray-500">
-                                            <span>${{ $donation['amount'] }}</span>
+                                            <span>${{ number_format($donation->amount) }}</span>
                                             <span class="mx-2">&bull;</span>
-                                            <span>{{ $donation['time'] }}</span>
+                                            <span>{{ $donation->created_at->diffForHumans() }}</span>
                                         </div>
                                     </div>
                                 </div>
                             </li>
-                            @endforeach
+                            @empty
+                            <p class="text-gray-500 text-sm">No donations yet. Be the first to support!</p>
+                            @endforelse
                         </ul>
                         <button class="w-full mt-6 py-2 border border-gray-200 text-gray-600 font-medium rounded-lg hover:bg-gray-50 transition">See all</button>
                     </div>
