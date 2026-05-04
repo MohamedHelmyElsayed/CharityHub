@@ -110,6 +110,12 @@ class DonationController extends Controller
 
     public function webhook(Request $request)
     {
+        \Illuminate\Support\Facades\Log::info('Donation Webhook Received', [
+            'method' => $request->method(),
+            'query' => $request->query(),
+            'payload_preview' => substr($request->getContent(), 0, 500)
+        ]);
+
         $payload = $request->getContent();
         // Paymob sends hmac via query, Stripe sends via header
         $signature = $request->query('hmac', $request->header('Stripe-Signature', ''));
@@ -117,8 +123,11 @@ class DonationController extends Controller
         try {
             $event = $this->gateway->handleWebhook($payload, $signature);
         } catch (\InvalidArgumentException $e) {
+            \Illuminate\Support\Facades\Log::error('Webhook Signature Verification Failed', ['error' => $e->getMessage()]);
             return response()->json(['error' => $e->getMessage()], 400);
         }
+
+        \Illuminate\Support\Facades\Log::info('Webhook Event Normalized', ['type' => $event['type']]);
 
         match ($event['type']) {
             'checkout.session.completed' => $this->handleSessionCompleted($event),
@@ -136,8 +145,13 @@ class DonationController extends Controller
         $data = $event['data'];
         $idempotencyKey = $data['metadata']['idempotency_key'] ?? null;
 
+        \Illuminate\Support\Facades\Log::info('Handling Session Completed', ['idempotency_key' => $idempotencyKey]);
+
         $donation = Donation::where('idempotency_key', $idempotencyKey)->first();
-        if (!$donation) return;
+        if (!$donation) {
+            \Illuminate\Support\Facades\Log::warning('Donation not found for idempotency key', ['key' => $idempotencyKey]);
+            return;
+        }
 
         $donation->update([
             'status' => 'completed',
@@ -148,6 +162,7 @@ class DonationController extends Controller
         $this->campaignService->updateProgress($donation->campaign, (float) $donation->amount);
 
         // Fire event → dispatches CertificateGenerationJob + LedgerEntryJob
+        \Illuminate\Support\Facades\Log::info('Firing DonationReceived Event', ['donation_id' => $donation->id]);
         event(new DonationReceived($donation));
     }
 

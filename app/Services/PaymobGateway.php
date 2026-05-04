@@ -11,10 +11,10 @@ use Illuminate\Support\Facades\Log;
 
 class PaymobGateway implements PaymentGatewayInterface
 {
-    private string $apiKey;
-    private string $integrationId;
-    private string $iframeId;
-    private string $hmacSecret;
+    private ?string $apiKey;
+    private ?string $integrationId;
+    private ?string $iframeId;
+    private ?string $hmacSecret;
     private string $baseUrl = 'https://accept.paymob.com/api';
 
     public function __construct()
@@ -104,7 +104,15 @@ class PaymobGateway implements PaymentGatewayInterface
     private function authenticate(): string
     {
         if (empty($this->apiKey)) {
-            throw new \Exception('Paymob API Key is empty. Please set PAYMOB_API_KEY in your .env file and run "php artisan config:clear".');
+            throw new \Exception('Paymob API Key is missing. Please set PAYMOB_API_KEY in your .env file.');
+        }
+
+        if (empty($this->integrationId)) {
+            throw new \Exception('Paymob Integration ID is missing. Please set PAYMOB_INTEGRATION_ID in your .env file.');
+        }
+
+        if (empty($this->iframeId)) {
+            throw new \Exception('Paymob Iframe ID is missing. Please set PAYMOB_IFRAME_ID in your .env file.');
         }
 
         $response = Http::post("{$this->baseUrl}/auth/tokens", [
