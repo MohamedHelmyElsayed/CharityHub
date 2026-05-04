@@ -27,42 +27,51 @@
             <h1 class="text-3xl font-extrabold text-gray-900 mb-8">Volunteer Applications</h1>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                @foreach([
-                    ['name' => 'Alice Cooper', 'email' => 'alice@example.com', 'phone' => '+1 555-0123', 'date' => '2 days ago', 'interests' => ['Event Organization', 'Fundraising'], 'status' => 'Pending'],
-                    ['name' => 'David Lee', 'email' => 'david@example.com', 'phone' => '+1 555-0198', 'date' => '5 days ago', 'interests' => ['Field Work'], 'status' => 'Pending'],
-                    ['name' => 'Amanda Wright', 'email' => 'amanda@example.com', 'phone' => '+1 555-0245', 'date' => '1 week ago', 'interests' => ['Fundraising', 'Administrative'], 'status' => 'Pending']
-                ] as $vol)
+                @forelse($volunteers as $vol)
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col hover:shadow-md transition">
                     <div class="flex justify-between items-start mb-6">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-600 text-lg">
-                                {{ substr($vol['name'], 0, 1) }}
+                                {{ substr($vol->name, 0, 1) }}
                             </div>
                             <div>
-                                <h3 class="text-lg font-extrabold text-gray-900">{{ $vol['name'] }}</h3>
-                                <p class="text-sm font-medium text-gray-500">{{ $vol['email'] }}</p>
+                                <h3 class="text-lg font-extrabold text-gray-900">{{ $vol->name }}</h3>
+                                <p class="text-sm font-medium text-gray-500">{{ $vol->email }}</p>
                             </div>
                         </div>
-                        <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full border border-gray-200">{{ $vol['date'] }}</span>
+                        <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full border border-gray-200">{{ $vol->created_at->diffForHumans() }}</span>
                     </div>
                     
                     <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Stated Interests</p>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Skills & Interests</p>
                         <div class="flex flex-wrap gap-2">
-                            @foreach($vol['interests'] as $interest)
+                            @foreach($vol->skills as $skill)
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary-50 text-primary-700 border border-primary-100">
-                                    {{ $interest }}
+                                    {{ $skill }}
                                 </span>
                             @endforeach
                         </div>
                     </div>
 
                     <div class="mt-auto pt-4 border-t border-gray-100 flex gap-3">
-                        <button class="flex-1 bg-primary-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-primary-700 transition shadow-sm">Approve</button>
-                        <button class="flex-1 bg-white border border-gray-300 text-gray-700 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-50 transition">Reject</button>
+                        <form action="{{ route('admin.volunteers.update-status', $vol->id) }}" method="POST" class="flex-1 flex gap-2">
+                            @csrf
+                            @method('PATCH')
+                            @if($vol->status === 'inactive')
+                                <input type="hidden" name="status" value="active">
+                                <button type="submit" class="flex-1 bg-primary-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-primary-700 transition shadow-sm">Approve</button>
+                            @else
+                                <input type="hidden" name="status" value="inactive">
+                                <button type="submit" class="flex-1 bg-white border border-gray-300 text-gray-700 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-50 transition">Deactivate</button>
+                            @endif
+                        </form>
                     </div>
                 </div>
-                @endforeach
+                @empty
+                    <div class="col-span-2 text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+                        <p class="text-gray-500">No volunteer applications found.</p>
+                    </div>
+                @endforelse
             </div>
             
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

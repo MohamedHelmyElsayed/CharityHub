@@ -50,7 +50,7 @@
             <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8 lg:p-12 relative z-10">
                 <h2 class="text-2xl font-bold text-slate-900 mb-6">Application Form</h2>
                 
-                <form method="POST" action="{{ route('volunteer.store') }}" class="space-y-6">
+                <form method="POST" action="{{ route('volunteer.register') }}" class="space-y-6">
                     @csrf
                     
                     @guest

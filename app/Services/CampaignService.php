@@ -46,6 +46,66 @@ class CampaignService
     }
 
     /**
+     * Get all campaigns.
+     */
+    public function getAllCampaigns(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Campaign::latest()->get();
+    }
+
+    /**
+     * Get a single campaign by ID.
+     */
+    public function getCampaignById(int $id): Campaign
+    {
+        return Campaign::findOrFail($id);
+    }
+
+    /**
+     * Create a new campaign.
+     */
+    public function createCampaign(array $data): Campaign
+    {
+        if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+            $data['featured_image'] = $data['image']->store('campaigns', 'public');
+            unset($data['image']);
+        }
+
+        $data['slug'] = \Illuminate\Support\Str::slug($data['title']);
+        
+        return Campaign::create($data);
+    }
+
+    /**
+     * Update an existing campaign.
+     */
+    public function updateCampaign(int $id, array $data): Campaign
+    {
+        $campaign = Campaign::findOrFail($id);
+
+        if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+            $data['featured_image'] = $data['image']->store('campaigns', 'public');
+            unset($data['image']);
+        }
+
+        if (isset($data['title']) && $data['title'] !== $campaign->title) {
+            $data['slug'] = \Illuminate\Support\Str::slug($data['title']);
+        }
+
+        $campaign->update($data);
+
+        return $campaign;
+    }
+
+    /**
+     * Delete a campaign.
+     */
+    public function deleteCampaign(int $id): bool
+    {
+        return Campaign::findOrFail($id)->delete();
+    }
+
+    /**
      * Get stats for admin dashboard.
      */
     public function getDashboardStats(): array

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('campaigns', function (Blueprint $table) {
             if (!Schema::hasColumn('campaigns', 'slug')) {
-                $table->string('slug')->unique()->after('title');
+                $table->string('slug')->unique()->nullable()->after('title');
             }
             if (!Schema::hasColumn('campaigns', 'cover_image')) {
                 $table->string('cover_image')->nullable()->after('description');

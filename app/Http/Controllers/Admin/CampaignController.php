@@ -18,12 +18,12 @@ class CampaignController extends Controller
     public function index()
     {
         $campaigns = $this->campaignService->getAllCampaigns();
-        return view('admin.campaigns.index', compact('campaigns'));
+        return view('admin.campaigns', compact('campaigns'));
     }
 
     public function create()
     {
-        return view('admin.campaigns.create');
+        return view('admin.campaigns');
     }
 
     public function store(Request $request)
@@ -46,7 +46,7 @@ class CampaignController extends Controller
     public function edit($id)
     {
         $campaign = $this->campaignService->getCampaignById($id);
-        return view('admin.campaigns.edit', compact('campaign'));
+        return view('admin.campaigns', compact('campaign'));
     }
 
     public function update(Request $request, $id)

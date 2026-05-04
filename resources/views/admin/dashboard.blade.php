@@ -33,7 +33,7 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 relative overflow-hidden">
                     <div class="absolute right-0 top-0 h-full w-2 bg-primary-500"></div>
                     <p class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-2">Total Raised</p>
-                    <h3 class="text-4xl font-extrabold text-gray-900">${{ number_format($stats['total_donations'], 2) }}</h3>
+                    <h3 class="text-4xl font-extrabold text-gray-900">${{ number_format($stats['total_raised'], 2) }}</h3>
                     <p class="text-sm text-green-600 mt-2 font-medium flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
                         Live data

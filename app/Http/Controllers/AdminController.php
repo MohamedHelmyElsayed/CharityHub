@@ -18,9 +18,12 @@ class AdminController extends Controller
             'total_raised' => Donation::where('status', 'completed')->sum('amount'),
             'total_donors' => Donor::count(),
             'active_campaigns' => Campaign::active()->count(),
+            'total_campaigns' => Campaign::count(),
             'total_donations' => Donation::where('status', 'completed')->count(),
             'pending_donations' => Donation::where('status', 'pending')->count(),
             'active_volunteers' => Volunteer::where('status', 'active')->count(),
+            'total_volunteers' => Volunteer::count(),
+            'total_volunteer_hours' => \App\Models\VolunteerHour::sum('hours'),
         ];
 
         $recentDonations = Donation::with(['donor', 'campaign'])

@@ -28,27 +28,30 @@ class VolunteerController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:20',
-            'skills' => 'nullable|array',
-            'skills.*' => 'string|max:100',
+            'skills' => 'nullable|string|max:500',
             'bio' => 'nullable|string|max:1000',
             'schedule_id' => 'nullable|exists:volunteer_schedules,id',
         ]);
 
+        // Process comma-separated skills string into array
+        $skillsArray = $request->filled('skills') 
+            ? array_map('trim', explode(',', $validated['skills']))
+            : [];
+
         // Find or create volunteer profile
-        $volunteer = Volunteer::firstOrCreate(
+        $volunteer = Volunteer::updateOrCreate(
             ['email' => $validated['email']],
             [
                 'user_id' => auth()->id(),
                 'name' => $validated['name'],
-                'email' => $validated['email'],
                 'phone' => $validated['phone'] ?? null,
-                'skills' => $validated['skills'] ?? [],
+                'skills' => $skillsArray,
                 'bio' => $validated['bio'] ?? null,
                 'status' => 'active',
             ]
         );
 
-        $response = ['message' => 'Volunteer profile created/updated.'];
+        $message = 'Volunteer profile updated successfully!';
 
         // Register for a specific schedule if requested
         if (!empty($validated['schedule_id'])) {
@@ -56,14 +59,11 @@ class VolunteerController extends Controller
 
             // Conflict detection
             if ($volunteer->hasConflict($schedule)) {
-                return response()->json([
-                    'error' => 'Scheduling conflict: You are already registered for another event during this time.',
-                    'conflict' => true,
-                ], 409);
+                return back()->withErrors(['error' => 'Scheduling conflict: You are already registered for another event during this time.']);
             }
 
             if ($schedule->isAtCapacity()) {
-                return response()->json(['error' => 'This event is at full capacity.'], 409);
+                return back()->withErrors(['error' => 'This event is at full capacity.']);
             }
 
             // Register
@@ -71,10 +71,14 @@ class VolunteerController extends Controller
                 $schedule->id => ['status' => 'registered']
             ]);
 
-            $response['message'] = 'Successfully registered for ' . $schedule->event_name;
+            $message = 'Successfully registered for ' . $schedule->event_name;
         }
 
-        return response()->json($response);
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return redirect()->route('volunteer.dashboard')->with('success', $message);
     }
 
     public function dashboard()

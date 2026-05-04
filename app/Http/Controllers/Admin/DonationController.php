@@ -10,12 +10,12 @@ class DonationController extends Controller
     public function index()
     {
         $donations = Donation::with(['user', 'campaign'])->latest()->paginate(20);
-        return view('admin.donations.index', compact('donations'));
+        return view('admin.donations', compact('donations'));
     }
 
     public function show($id)
     {
         $donation = Donation::with(['user', 'campaign'])->findOrFail($id);
-        return view('admin.donations.show', compact('donation'));
+        return view('admin.donations', compact('donation'));
     }
 }
