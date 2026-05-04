@@ -73,16 +73,18 @@
                             <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=EFF6FF&color=1D4ED8" alt="Avatar" class="w-8 h-8 rounded-full border border-slate-200">
                             <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div class="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 transform origin-top-right scale-95 group-hover:scale-100">
-                            <div class="px-4 py-3 border-b border-slate-100">
-                                <p class="text-sm leading-5 font-medium text-slate-900 truncate">{{ auth()->user()->name }}</p>
-                                <p class="text-xs leading-5 font-medium text-slate-500 truncate">{{ auth()->user()->email }}</p>
+                        <div class="absolute right-0 pt-3 w-56 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 transform origin-top-right scale-95 group-hover:scale-100 z-50">
+                            <div class="bg-white rounded-2xl shadow-xl border border-slate-100 py-2">
+                                <div class="px-4 py-3 border-b border-slate-100">
+                                    <p class="text-sm leading-5 font-medium text-slate-900 truncate">{{ auth()->user()->name }}</p>
+                                    <p class="text-xs leading-5 font-medium text-slate-500 truncate">{{ auth()->user()->email }}</p>
+                                </div>
+                                <a href="{{ route('volunteer.dashboard') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">My Dashboard</a>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">Sign out</button>
+                                </form>
                             </div>
-                            <a href="{{ route('volunteer.dashboard') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">My Dashboard</a>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">Sign out</button>
-                            </form>
                         </div>
                     </div>
                 @else
