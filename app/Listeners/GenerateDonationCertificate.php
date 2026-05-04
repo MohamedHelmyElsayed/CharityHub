@@ -3,30 +3,22 @@
 namespace App\Listeners;
 
 use App\Events\DonationReceived;
+use App\Jobs\CertificateGenerationJob;
+use App\Jobs\LedgerEntryJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 
 class GenerateDonationCertificate implements ShouldQueue
 {
-    /**
-     * Create the event listener.
-     */
-    public function __construct()
-    {
-        //
-    }
+    public string $queue = 'certificates';
 
-    /**
-     * Handle the event.
-     */
     public function handle(DonationReceived $event): void
     {
         $donation = $event->donation;
-        
-        \Illuminate\Support\Facades\Log::info("Generating donation certificate for donation ID: {$donation->id}");
-        
-        // PDF generation logic would go here
-        // $pdf = Pdf::loadView('pdf.certificate', compact('donation'));
-        // Storage::put("certificates/donation_{$donation->id}.pdf", $pdf->output());
+
+        // Dispatch certificate generation
+        CertificateGenerationJob::dispatch($donation)->onQueue('certificates');
+
+        // Dispatch ledger entry
+        LedgerEntryJob::dispatch($donation, 'donation', 'success')->onQueue('ledger');
     }
 }

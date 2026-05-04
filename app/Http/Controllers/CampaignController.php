@@ -2,27 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Campaign;
+use App\Models\ImpactReport;
 use Illuminate\Http\Request;
-use App\Services\CampaignService;
 
 class CampaignController extends Controller
 {
-    protected $campaignService;
-
-    public function __construct(CampaignService $campaignService)
+    public function index(Request $request)
     {
-        $this->campaignService = $campaignService;
-    }
+        $campaigns = Campaign::active()
+            ->orderByDesc('featured')
+            ->orderByDesc('created_at')
+            ->paginate(9);
 
-    public function index()
-    {
-        $campaigns = $this->campaignService->getAllCampaigns('active');
         return view('pages.campaigns', compact('campaigns'));
     }
 
-    public function show($id)
+    public function show(string $slug)
     {
-        $campaign = $this->campaignService->getCampaignById($id);
-        return view('pages.campaign-details', compact('campaign'));
+        $campaign = Campaign::where('slug', $slug)->firstOrFail();
+        $recentDonations = $campaign->donations()
+            ->with(['donor'])
+            ->where('status', 'completed')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
+        $impactReports = $campaign->impactReports()->published()->latest()->get();
+
+        return view('pages.campaign-details', compact('campaign', 'recentDonations', 'impactReports'));
     }
 }

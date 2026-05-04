@@ -3,66 +3,58 @@
 namespace App\Services;
 
 use App\Models\Campaign;
-use Illuminate\Support\Facades\Storage;
+use App\Models\Donation;
+use App\Models\Donor;
+use App\Models\FinancialLog;
+use Illuminate\Support\Facades\DB;
 
 class CampaignService
 {
-    public function getAllCampaigns($status = null)
+    /**
+     * Update campaign's current_amount after a successful donation.
+     */
+    public function updateProgress(Campaign $campaign, float $amount): void
     {
-        $query = Campaign::query();
-        if ($status) {
-            $query->where('status', $status);
+        DB::table('campaigns')
+            ->where('id', $campaign->id)
+            ->increment('current_amount', $amount);
+
+        // Auto-end campaign if goal reached
+        $campaign->refresh();
+        if ($campaign->current_amount >= $campaign->goal_amount && $campaign->status === 'active') {
+            $campaign->update(['status' => 'ended']);
         }
-        return $query->latest()->get();
     }
 
-    public function getCampaignById($id)
+    /**
+     * Get live donation feed (recent completed donations for a campaign).
+     */
+    public function getLiveFeed(Campaign $campaign, int $limit = 10): \Illuminate\Support\Collection
     {
-        return Campaign::findOrFail($id);
+        return Donation::with(['donor'])
+            ->where('campaign_id', $campaign->id)
+            ->where('status', 'completed')
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($d) => [
+                'name' => $d->anonymous ? 'Anonymous' : ($d->donor?->name ?? 'Anonymous'),
+                'amount' => (float) $d->amount,
+                'time' => $d->created_at->diffForHumans(),
+                'message' => $d->message,
+            ]);
     }
 
-    public function createCampaign(array $data)
+    /**
+     * Get stats for admin dashboard.
+     */
+    public function getDashboardStats(): array
     {
-        if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
-            $data['image'] = $data['image']->store('campaigns', 'public');
-        }
-
-        return Campaign::create($data);
-    }
-
-    public function updateCampaign($id, array $data)
-    {
-        $campaign = Campaign::findOrFail($id);
-
-        if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
-            if ($campaign->image) {
-                Storage::disk('public')->delete($campaign->image);
-            }
-            $data['image'] = $data['image']->store('campaigns', 'public');
-        }
-
-        $campaign->update($data);
-        return $campaign;
-    }
-
-    public function deleteCampaign($id)
-    {
-        $campaign = Campaign::findOrFail($id);
-        if ($campaign->image) {
-            Storage::disk('public')->delete($campaign->image);
-        }
-        return $campaign->delete();
-    }
-
-    public function updateProgress($id, $amount)
-    {
-        $campaign = Campaign::findOrFail($id);
-        $campaign->increment('current_amount', $amount);
-        
-        if ($campaign->current_amount >= $campaign->goal_amount) {
-            $campaign->update(['status' => 'completed']);
-        }
-        
-        return $campaign;
+        return [
+            'total_raised' => Donation::where('status', 'completed')->sum('amount'),
+            'total_donors' => Donor::count(),
+            'active_campaigns' => Campaign::active()->count(),
+            'total_donations' => Donation::where('status', 'completed')->count(),
+        ];
     }
 }

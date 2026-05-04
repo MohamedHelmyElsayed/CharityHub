@@ -3,125 +3,110 @@
 @section('title', 'Become a Volunteer')
 
 @section('content')
-<div class="bg-gray-900 py-20 relative overflow-hidden">
-    <div class="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1559027615-cd4628902d4a?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center"></div>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-        <h1 class="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl tracking-tight mb-6">Join Our Volunteer Team</h1>
-        <p class="mt-4 text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">Give your time, skills, and heart to make a real difference in communities that need it most. Together, we can build a better tomorrow.</p>
+<div class="min-h-screen bg-slate-50 py-16 lg:py-24 relative overflow-hidden">
+    {{-- Background decorations --}}
+    <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute -top-40 right-20 w-[600px] h-[600px] bg-gradient-to-br from-blue-100 to-transparent blur-3xl opacity-50 rounded-full"></div>
     </div>
-</div>
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 -mt-16 relative z-20">
-    @if(session('success'))
-        <div class="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl font-bold text-center shadow-sm">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if(auth()->check() && auth()->user()->subtype === 'volunteer')
-        <!-- Volunteer Dashboard / Log Hours -->
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-12">
-            <div class="p-8 sm:p-12">
-                <h2 class="text-2xl font-bold text-gray-900 mb-8 border-b border-gray-100 pb-4 text-center">Volunteer Portal</h2>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+            
+            {{-- Left column: Info --}}
+            <div class="lg:sticky lg:top-32 space-y-8">
+                <div>
+                    <span class="text-blue-600 font-bold text-sm uppercase tracking-wider mb-3 block">Join Our Team</span>
+                    <h1 class="text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
+                        Give your time.<br>Change the world.
+                    </h1>
+                </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Log Your Hours</h3>
-                        <form action="{{ route('volunteer.hours') }}" method="POST" class="space-y-4">
-                            @csrf
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Date</label>
-                                <input type="date" name="date" required value="{{ date('Y-m-d') }}" class="w-full border-gray-300 rounded-lg py-3 px-4 border bg-gray-50 focus:ring-primary-500 focus:border-primary-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Hours Worked</label>
-                                <input type="number" name="hours" step="0.5" min="0.5" max="24" required placeholder="e.g. 4.5" class="w-full border-gray-300 rounded-lg py-3 px-4 border bg-gray-50 focus:ring-primary-500 focus:border-primary-500">
-                            </div>
-                            <button type="submit" class="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white font-extrabold rounded-xl transition shadow-lg shadow-primary-500/20">
-                                Save Hours
-                            </button>
-                        </form>
-                    </div>
-                    
-                    <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Your Impact</h3>
-                        <div class="text-center py-6">
-                            <span class="block text-5xl font-black text-primary-600">{{ auth()->user()->volunteer->total_hours }}</span>
-                            <span class="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Hours Contributed</span>
+                <p class="text-lg text-slate-500 font-medium leading-relaxed max-w-lg">
+                    Whether you have professional skills to offer or just a few hours on the weekend, your time is invaluable. Join our global network of volunteers.
+                </p>
+
+                <div class="space-y-6 pt-4">
+                    @foreach([
+                        ['icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', 'title' => 'Flexible Commitment', 'desc' => 'Choose schedules that fit your availability.'],
+                        ['icon' => 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', 'title' => 'Verified Hours', 'desc' => 'Get official certificates for your volunteer hours.'],
+                        ['icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', 'title' => 'Global Community', 'desc' => 'Connect with like-minded change-makers.'],
+                    ] as $perk)
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm border border-slate-100">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $perk['icon'] }}"/>
+                            </svg>
                         </div>
-                        <div class="mt-4">
-                            <h4 class="text-sm font-bold text-gray-700 mb-3">Recent Activity</h4>
-                            <ul class="space-y-3">
-                                @forelse(auth()->user()->volunteer->hours()->latest()->take(3)->get() as $hour)
-                                    <li class="flex justify-between text-sm border-b border-gray-200 pb-2">
-                                        <span class="text-gray-600">{{ $hour->date }}</span>
-                                        <span class="font-bold text-gray-900">{{ $hour->hours }} hours</span>
-                                    </li>
-                                @empty
-                                    <p class="text-xs text-gray-400">No hours logged yet.</p>
-                                @endforelse
-                            </ul>
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-lg">{{ $perk['title'] }}</h3>
+                            <p class="text-slate-500 font-medium text-sm mt-1">{{ $perk['desc'] }}</p>
                         </div>
                     </div>
+                    @endforeach
                 </div>
             </div>
-        </div>
-    @else
-        <!-- Application Form -->
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-            <div class="p-8 sm:p-12">
-                <h2 class="text-2xl font-bold text-gray-900 mb-8 border-b border-gray-100 pb-4">Application Form</h2>
+
+            {{-- Right column: Form --}}
+            <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8 lg:p-12 relative z-10">
+                <h2 class="text-2xl font-bold text-slate-900 mb-6">Application Form</h2>
                 
-                <form action="{{ route('volunteer.register') }}" method="POST" class="space-y-8">
+                <form method="POST" action="{{ route('volunteer.store') }}" class="space-y-6">
                     @csrf
                     
-                    @if(!auth()->check())
-                        <div class="p-4 bg-yellow-50 border border-yellow-100 text-yellow-800 rounded-lg text-sm font-medium mb-6">
-                            You must be logged in to apply as a volunteer. 
-                            <a href="{{ route('login') }}" class="underline font-bold">Login here</a>
+                    @guest
+                        <div class="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex gap-3 items-start">
+                            <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <p class="text-sm font-medium text-blue-800">
+                                You are applying as a guest. To easily track your hours and schedules later, <a href="{{ route('login') }}" class="font-bold underline hover:text-blue-900">sign in</a> first.
+                            </p>
                         </div>
-                    @endif
+                    @endguest
 
-                    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-2">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="first-name" class="block text-sm font-bold text-gray-700">Full Name</label>
-                            <div class="mt-2">
-                                <input type="text" name="name" id="name" value="{{ auth()->user() ? auth()->user()->name : '' }}" required class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-base border-gray-300 rounded-lg py-3 px-4 border bg-gray-50">
-                            </div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">Full Name</label>
+                            <input type="text" name="name" required value="{{ old('name', auth()->user()?->name) }}"
+                                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all font-medium @error('name') border-red-300 @enderror">
+                            @error('name') <p class="text-red-500 text-xs mt-1 font-medium">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="email" class="block text-sm font-bold text-gray-700">Email address</label>
-                            <div class="mt-2">
-                                <input id="email" name="email" type="email" value="{{ auth()->user() ? auth()->user()->email : '' }}" required class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-base border-gray-300 rounded-lg py-3 px-4 border bg-gray-50">
-                            </div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
+                            <input type="email" name="email" required value="{{ old('email', auth()->user()?->email) }}"
+                                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all font-medium @error('email') border-red-300 @enderror">
+                            @error('email') <p class="text-red-500 text-xs mt-1 font-medium">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
-                    <div class="pt-6 border-t border-gray-100">
-                        <label class="block text-sm font-bold text-gray-700 mb-4">Areas of Interest</label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            @foreach(['Event Organization', 'Fundraising', 'Field Work', 'Administrative'] as $interest)
-                            <label class="relative flex items-start p-4 cursor-pointer rounded-lg border border-gray-200 hover:bg-gray-50">
-                                <div class="flex items-center h-5">
-                                    <input name="interests[]" type="checkbox" value="{{ $interest }}" class="focus:ring-primary-500 h-5 w-5 text-primary-600 border-gray-300 rounded">
-                                </div>
-                                <div class="ml-3 text-sm">
-                                    <span class="font-bold text-gray-900 block">{{ $interest }}</span>
-                                </div>
-                            </label>
-                            @endforeach
-                        </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Phone Number</label>
+                        <input type="text" name="phone" required value="{{ old('phone') }}"
+                               class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all font-medium"
+                               placeholder="+1 (555) 000-0000">
                     </div>
 
-                    <div class="pt-4">
-                        <button type="submit" {{ !auth()->check() ? 'disabled' : '' }} class="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-lg font-extrabold text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition transform hover:-translate-y-1 {{ !auth()->check() ? 'opacity-50 cursor-not-allowed' : '' }}">
-                            Register as Volunteer
-                        </button>
-                        <p class="text-center text-sm text-gray-500 mt-4">By registering, you agree to our volunteer terms and code of conduct.</p>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Skills & Interests (Comma separated)</label>
+                        <input type="text" name="skills" required value="{{ old('skills') }}"
+                               class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all font-medium"
+                               placeholder="e.g. translation, event planning, web design">
                     </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Why do you want to volunteer?</label>
+                        <textarea name="bio" required rows="4"
+                                  class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all font-medium resize-none"
+                                  placeholder="Tell us a little about yourself..."></textarea>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full py-4 bg-slate-900 hover:bg-blue-600 text-white font-bold text-lg rounded-xl transition-all duration-300 shadow-xl shadow-slate-900/10 hover:shadow-blue-500/25 flex justify-center items-center gap-2">
+                        Submit Application
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </button>
+                    <p class="text-xs text-center text-slate-400 font-medium">We will review your application and get back to you within 48 hours.</p>
                 </form>
             </div>
         </div>
-    @endif
+    </div>
 </div>
 @endsection

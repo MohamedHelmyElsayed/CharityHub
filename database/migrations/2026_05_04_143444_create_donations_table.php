@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('donations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('campaign_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 12, 2);
             $table->string('status')->default('pending'); // pending, completed, failed

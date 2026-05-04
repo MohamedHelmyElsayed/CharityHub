@@ -6,17 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('donor_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('campaign_id')->nullable()->constrained()->nullOnDelete();
             $table->string('stripe_id')->unique();
             $table->string('stripe_status');
             $table->string('stripe_price')->nullable();
+            $table->decimal('amount', 12, 2)->default(0);
+            $table->string('currency', 10)->default('USD');
             $table->integer('quantity')->nullable();
             $table->timestamp('trial_ends_at')->nullable();
             $table->timestamp('ends_at')->nullable();
@@ -24,9 +25,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('subscriptions');
