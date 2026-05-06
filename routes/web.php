@@ -93,4 +93,21 @@ Route::prefix('admin')->name('custom_admin.')->middleware(['auth', 'role:admin,e
     Route::get('/volunteers', [\App\Http\Controllers\Admin\VolunteerController::class, 'index'])->name('volunteers.index');
     Route::get('/volunteers/{id}', [\App\Http\Controllers\Admin\VolunteerController::class, 'show'])->name('volunteers.show');
     Route::patch('/volunteers/{id}/status', [\App\Http\Controllers\Admin\VolunteerController::class, 'updateStatus'])->name('volunteers.update-status');
+
+    // Volunteer Hour Approval
+    Route::get('/volunteer-hours', [\App\Http\Controllers\Admin\VolunteerHourController::class, 'index'])->name('volunteer-hours.index');
+    Route::post('/volunteer-hours/{log}/approve', [\App\Http\Controllers\Admin\VolunteerHourController::class, 'approve'])->name('volunteer-hours.approve');
+
+    // Impact Reports
+    Route::get('/impact-reports', [\App\Http\Controllers\Admin\ImpactReportController::class, 'index'])->name('impact-reports.index');
+
+    // Full Schedule Management
+    Route::resource('schedules', \App\Http\Controllers\Admin\VolunteerScheduleController::class)->names([
+        'index' => 'schedules.index',
+        'create' => 'schedules.create',
+        'store' => 'schedules.store',
+        'edit' => 'schedules.edit',
+        'update' => 'schedules.update',
+        'destroy' => 'schedules.destroy',
+    ]);
 });

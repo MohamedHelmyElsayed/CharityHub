@@ -92,6 +92,32 @@
                     </div>
 
                     <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-4">Choose an Event (Optional)</label>
+                        <div class="grid grid-cols-1 gap-4">
+                            @forelse($schedules as $schedule)
+                            <label class="relative flex items-center p-4 bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer hover:border-blue-500 transition-all group">
+                                <input type="radio" name="schedule_id" value="{{ $schedule->id }}" class="sr-only peer">
+                                <div class="w-12 h-12 rounded-xl bg-white border border-slate-100 flex flex-col items-center justify-center text-slate-900 group-hover:bg-blue-600 group-hover:text-white transition-colors mr-4">
+                                    <span class="text-lg font-black leading-none">{{ $schedule->event_date->format('d') }}</span>
+                                    <span class="text-[8px] font-bold uppercase tracking-widest">{{ $schedule->event_date->format('M') }}</span>
+                                </div>
+                                <div class="flex-grow">
+                                    <div class="text-sm font-bold text-slate-900">{{ $schedule->event_name }}</div>
+                                    <div class="text-[10px] text-slate-500 font-medium">
+                                        {{ $schedule->location_name }} • {{ $schedule->start_time->format('H:i') }}
+                                    </div>
+                                </div>
+                                <div class="w-5 h-5 rounded-full border-2 border-slate-300 peer-checked:border-blue-600 peer-checked:bg-blue-600 flex items-center justify-center transition-all">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-white opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                                </div>
+                            </label>
+                            @empty
+                            <p class="text-sm text-slate-400 italic">No scheduled events at the moment. You can still register as a general volunteer.</p>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <div>
                         <label class="block text-sm font-bold text-slate-700 mb-2">Why do you want to volunteer?</label>
                         <textarea name="bio" required rows="4"
                                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all font-medium resize-none"

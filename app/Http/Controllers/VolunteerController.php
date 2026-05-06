@@ -90,7 +90,7 @@ class VolunteerController extends Controller
 
         $upcomingSchedules = $volunteer->schedules()
             ->where('event_date', '>=', today())
-            ->where('status', 'scheduled')
+            ->where('volunteer_schedules.status', 'scheduled')
             ->orderBy('event_date')
             ->get();
 

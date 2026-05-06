@@ -23,6 +23,8 @@ class VolunteerSchedule extends Model
 
     protected $casts = [
         'event_date' => 'date',
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
     ];
 
     public function campaign()

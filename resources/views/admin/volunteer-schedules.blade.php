@@ -18,13 +18,22 @@
                     <a href="{{ route('custom_admin.dashboard') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Dashboard Overview</a>
                     <a href="{{ route('custom_admin.campaigns.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Manage Campaigns</a>
                     <a href="{{ route('custom_admin.donations.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Donations Ledger</a>
-                    <a href="{{ route('custom_admin.volunteers.index') }}" class="bg-primary-50 text-primary-700 block px-4 py-3 rounded-lg text-sm font-bold transition">Volunteers</a>
+                    <a href="{{ route('custom_admin.volunteers.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Volunteers</a>
+                    <a href="{{ route('custom_admin.schedules.index') }}" class="bg-primary-50 text-primary-700 block px-4 py-3 rounded-lg text-sm font-bold transition">Event Schedules</a>
+                    <a href="{{ route('custom_admin.volunteer-hours.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Hour Logs</a>
+                    <a href="{{ route('custom_admin.impact-reports.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Impact Reports</a>
                 </nav>
             </div>
         </div>
 
         <div class="flex-1">
-            <h1 class="text-3xl font-extrabold text-gray-900 mb-8">Volunteer Schedules</h1>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <h1 class="text-3xl font-extrabold text-gray-900">Volunteer Schedules</h1>
+                <a href="{{ route('custom_admin.schedules.create') }}" class="bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-md transition flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Create Schedule
+                </a>
+            </div>
 
             <div class="grid grid-cols-1 gap-8">
                 @forelse($schedules as $schedule)
@@ -42,6 +51,18 @@
                             <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full border border-blue-200 uppercase tracking-wider">
                                 {{ $schedule->status }}
                             </span>
+                            <div class="flex gap-2">
+                                <a href="{{ route('custom_admin.schedules.edit', $schedule->id) }}" class="p-2 text-gray-400 hover:text-primary-600 transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </a>
+                                <form action="{{ route('custom_admin.schedules.destroy', $schedule->id) }}" method="POST" onsubmit="return confirm('Delete this schedule?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="p-2 text-gray-400 hover:text-red-600 transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
 
