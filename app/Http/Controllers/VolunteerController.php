@@ -22,6 +22,16 @@ class VolunteerController extends Controller
         return view('pages.volunteer', compact('schedules', 'myVolunteer'));
     }
 
+    public function profile()
+    {
+        $myVolunteer = auth()->user()->volunteer;
+        if (!$myVolunteer) {
+            return redirect()->route('volunteer.index')->with('info', 'Please register as a volunteer first.');
+        }
+
+        return view('pages.volunteer-profile-edit', compact('myVolunteer'));
+    }
+
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -83,11 +93,13 @@ class VolunteerController extends Controller
 
     public function dashboard()
     {
-        $volunteer = auth()->user()->volunteer;
+        $user = auth()->user();
+        $volunteer = $user->volunteer;
         if (!$volunteer) {
             return redirect()->route('volunteer.index')->with('info', 'Please register as a volunteer first.');
         }
 
+        // Volunteer Schedules
         $upcomingSchedules = $volunteer->schedules()
             ->where('event_date', '>=', today())
             ->where('volunteer_schedules.status', 'scheduled')
@@ -99,7 +111,40 @@ class VolunteerController extends Controller
             ->orderByDesc('event_date')
             ->get();
 
-        return view('pages.volunteer-dashboard', compact('volunteer', 'upcomingSchedules', 'pastSchedules'));
+        // Donation Stats (if they are also a donor)
+        $donationStats = [
+            'total_donated' => \App\Models\Donation::where('user_id', $user->id)->completed()->sum('amount'),
+            'donation_count' => \App\Models\Donation::where('user_id', $user->id)->completed()->count(),
+            'certificates_count' => \App\Models\Donation::where('user_id', $user->id)->whereNotNull('certificate_uuid')->count(),
+            'impact_points' => (\App\Models\Donation::where('user_id', $user->id)->completed()->sum('amount') * 10) + ($volunteer->total_hours * 50), // 50 points per hour
+        ];
+
+        $recentDonations = \App\Models\Donation::with('campaign')
+            ->where('user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get();
+
+        $certificates = \App\Models\Donation::where('user_id', $user->id)
+            ->whereNotNull('certificate_uuid')
+            ->orderByDesc('created_at')
+            ->get();
+
+        // Hour Logs (for approval status)
+        $hourLogs = $volunteer->hours()
+            ->with('schedule')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('pages.volunteer-dashboard', compact(
+            'volunteer', 
+            'upcomingSchedules', 
+            'pastSchedules', 
+            'donationStats', 
+            'recentDonations', 
+            'certificates',
+            'hourLogs'
+        ));
     }
 
     public function logHours(Request $request)
@@ -129,5 +174,10 @@ class VolunteerController extends Controller
         ]);
 
         return back()->with('success', 'Hours logged successfully and pending approval.');
+    }
+
+    public function showSchedule(VolunteerSchedule $schedule)
+    {
+        return view('pages.volunteer-schedule-details', compact('schedule'));
     }
 }

@@ -42,8 +42,10 @@ Route::get('/certificates/{uuid}/download', [CertificateController::class, 'down
 
 // ─── Volunteer Routes ─────────────────────────────────────────────────────────
 Route::get('/volunteer', [VolunteerController::class, 'index'])->name('volunteer.index');
+Route::get('/volunteer/profile', [VolunteerController::class, 'profile'])->name('volunteer.profile.edit')->middleware('auth');
 Route::post('/volunteer/register', [VolunteerController::class, 'register'])->name('volunteer.register')->middleware('auth');
 Route::get('/volunteer/dashboard', [VolunteerController::class, 'dashboard'])->name('volunteer.dashboard')->middleware('auth');
+Route::get('/volunteer/schedules/{schedule}', [VolunteerController::class, 'showSchedule'])->name('volunteer.schedule.show')->middleware('auth');
 Route::post('/volunteer/hours', [VolunteerController::class, 'logHours'])->name('volunteer.hours')->middleware('auth');
 
 // ─── Dashboard Redirection ──────────────────────────────────────────────────
@@ -74,8 +76,8 @@ Route::prefix('admin')->name('custom_admin.')->middleware(['auth', 'role:admin,e
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/ledger', [AdminController::class, 'ledger'])->name('ledger');
     Route::get('/donors', [AdminController::class, 'donors'])->name('donors');
-    Route::get('/volunteer-schedules', [AdminController::class, 'volunteerSchedules'])->name('volunteer-schedules');
-    Route::post('/volunteer-schedules/{schedule}/assign', [AdminController::class, 'assignVolunteer'])->name('volunteer-schedules.assign');
+    Route::post('/manage-schedules/{schedule}/assign', [AdminController::class, 'assignVolunteer'])->name('volunteer-schedules.assign');
+    Route::delete('/manage-schedules/{schedule}/unassign/{volunteer}', [AdminController::class, 'unassignVolunteer'])->name('volunteer-schedules.unassign');
 
     // --- Hybrid Management Routes ---
     Route::resource('campaigns', \App\Http\Controllers\Admin\CampaignController::class)->names([
@@ -87,22 +89,35 @@ Route::prefix('admin')->name('custom_admin.')->middleware(['auth', 'role:admin,e
         'destroy' => 'campaigns.destroy',
     ]);
 
-    Route::get('/donations', [\App\Http\Controllers\Admin\DonationController::class, 'index'])->name('donations.index');
-    Route::get('/donations/{id}', [\App\Http\Controllers\Admin\DonationController::class, 'show'])->name('donations.show');
+    // Donations Ledger (Renamed URL to avoid Filament conflict)
+    Route::get('/manage-donations', [\App\Http\Controllers\Admin\DonationController::class, 'index'])->name('donations.index');
+    Route::get('/manage-donations/{id}', [\App\Http\Controllers\Admin\DonationController::class, 'show'])->name('donations.show');
     
-    Route::get('/volunteers', [\App\Http\Controllers\Admin\VolunteerController::class, 'index'])->name('volunteers.index');
-    Route::get('/volunteers/{id}', [\App\Http\Controllers\Admin\VolunteerController::class, 'show'])->name('volunteers.show');
-    Route::patch('/volunteers/{id}/status', [\App\Http\Controllers\Admin\VolunteerController::class, 'updateStatus'])->name('volunteers.update-status');
+    // Donors (Renamed URL to avoid Filament conflict)
+    Route::get('/manage-donors', [\App\Http\Controllers\Admin\DonorController::class, 'index'])->name('donors.index');
+    Route::get('/manage-donors/{id}', [\App\Http\Controllers\Admin\DonorController::class, 'show'])->name('donors.show');
+    
+    // Volunteers Management (Renamed URL to avoid Filament conflict)
+    Route::get('/manage-volunteers', [\App\Http\Controllers\Admin\VolunteerController::class, 'index'])->name('volunteers.index');
+    Route::get('/manage-volunteers/{id}', [\App\Http\Controllers\Admin\VolunteerController::class, 'show'])->name('volunteers.show');
+    Route::patch('/manage-volunteers/{id}/status', [\App\Http\Controllers\Admin\VolunteerController::class, 'updateStatus'])->name('volunteers.update-status');
 
     // Volunteer Hour Approval
     Route::get('/volunteer-hours', [\App\Http\Controllers\Admin\VolunteerHourController::class, 'index'])->name('volunteer-hours.index');
     Route::post('/volunteer-hours/{log}/approve', [\App\Http\Controllers\Admin\VolunteerHourController::class, 'approve'])->name('volunteer-hours.approve');
 
-    // Impact Reports
-    Route::get('/impact-reports', [\App\Http\Controllers\Admin\ImpactReportController::class, 'index'])->name('impact-reports.index');
+    // Impact Reports Resource (Changed URL to avoid Filament conflict)
+    Route::resource('manage-impact-reports', \App\Http\Controllers\Admin\ImpactReportController::class)->names([
+        'index' => 'impact-reports.index',
+        'create' => 'impact-reports.create',
+        'store' => 'impact-reports.store',
+        'edit' => 'impact-reports.edit',
+        'update' => 'impact-reports.update',
+        'destroy' => 'impact-reports.destroy',
+    ]);
 
-    // Full Schedule Management
-    Route::resource('schedules', \App\Http\Controllers\Admin\VolunteerScheduleController::class)->names([
+    // Full Schedule Management (Renamed URL to avoid Filament conflict)
+    Route::resource('manage-schedules', \App\Http\Controllers\Admin\VolunteerScheduleController::class)->names([
         'index' => 'schedules.index',
         'create' => 'schedules.create',
         'store' => 'schedules.store',

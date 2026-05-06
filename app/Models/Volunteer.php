@@ -41,12 +41,6 @@ class Volunteer extends Model
             ->withTimestamps();
     }
 
-    public function getTotalHoursAttribute(): float
-    {
-        return (float) $this->schedules()
-            ->wherePivot('status', 'attended')
-            ->sum('volunteer_schedule_user.hours_worked');
-    }
 
     /**
      * Detect scheduling conflicts: check if volunteer is already booked

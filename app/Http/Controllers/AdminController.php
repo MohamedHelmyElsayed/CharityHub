@@ -101,4 +101,11 @@ class AdminController extends Controller
 
         return back()->with('success', 'Volunteer assigned successfully.');
     }
+
+    public function unassignVolunteer(VolunteerSchedule $schedule, Volunteer $volunteer)
+    {
+        $schedule->volunteers()->detach($volunteer->id);
+
+        return back()->with('success', 'Volunteer unassigned successfully.');
+    }
 }
