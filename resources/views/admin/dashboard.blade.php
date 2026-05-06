@@ -16,10 +16,10 @@
                     </h3>
                 </div>
                 <nav class="p-3 space-y-1">
-                    <a href="{{ route('admin.dashboard') }}" class="bg-primary-50 text-primary-700 block px-4 py-3 rounded-lg text-sm font-bold transition">Dashboard Overview</a>
-                    <a href="{{ route('admin.campaigns.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Manage Campaigns</a>
-                    <a href="{{ route('admin.donations.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Donations Ledger</a>
-                    <a href="{{ route('admin.volunteers.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Volunteers</a>
+                    <a href="{{ route('custom_admin.dashboard') }}" class="bg-primary-50 text-primary-700 block px-4 py-3 rounded-lg text-sm font-bold transition">Dashboard Overview</a>
+                    <a href="{{ route('custom_admin.campaigns.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Manage Campaigns</a>
+                    <a href="{{ route('custom_admin.donations.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Donations Ledger</a>
+                    <a href="{{ route('custom_admin.volunteers.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Volunteers</a>
                 </nav>
             </div>
         </div>
@@ -58,7 +58,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <h3 class="font-bold text-gray-900 text-lg">Recent Donations</h3>
-                    <a href="{{ route('admin.donations.index') }}" class="text-sm font-bold text-primary-600 hover:text-primary-800">View All</a>
+                    <a href="{{ route('custom_admin.donations.index') }}" class="text-sm font-bold text-primary-600 hover:text-primary-800">View All</a>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">

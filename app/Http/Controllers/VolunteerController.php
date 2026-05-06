@@ -119,6 +119,15 @@ class VolunteerController extends Controller
             'status' => 'attended',
         ]);
 
-        return response()->json(['message' => 'Hours logged successfully.']);
+        // Create dedicated hour log for admin approval
+        \App\Models\VolunteerHour::create([
+            'volunteer_id' => $volunteer->id,
+            'volunteer_schedule_id' => $validated['schedule_id'],
+            'date' => now()->toDateString(),
+            'hours' => $validated['hours'],
+            'status' => 'pending',
+        ]);
+
+        return back()->with('success', 'Hours logged successfully and pending approval.');
     }
 }

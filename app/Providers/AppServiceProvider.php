@@ -26,5 +26,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Events\DonationReceived::class,
             \App\Listeners\GenerateDonationCertificate::class,
         );
+
+        Event::listen(
+            \App\Events\DonationReceived::class,
+            \App\Listeners\UpdateCampaignProgress::class,
+        );
     }
 }

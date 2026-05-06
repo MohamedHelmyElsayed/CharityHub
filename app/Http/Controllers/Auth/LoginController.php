@@ -24,7 +24,7 @@ class LoginController extends Controller
             $request->session()->regenerate();
 
             if (Auth::user()->isAdmin() || Auth::user()->isEmployee()) {
-                return redirect()->intended(route('admin.dashboard'));
+                return redirect()->intended(route('custom_admin.dashboard'));
             }
 
             return redirect()->intended(route('home'));

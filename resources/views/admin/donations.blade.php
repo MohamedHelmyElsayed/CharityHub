@@ -16,10 +16,10 @@
                     </h3>
                 </div>
                 <nav class="p-3 space-y-1">
-                    <a href="{{ route('admin.dashboard') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Dashboard Overview</a>
-                    <a href="{{ route('admin.campaigns.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Manage Campaigns</a>
-                    <a href="{{ route('admin.donations.index') }}" class="bg-primary-50 text-primary-700 block px-4 py-3 rounded-lg text-sm font-bold transition">Donations Ledger</a>
-                    <a href="{{ route('admin.volunteers.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Volunteers</a>
+                    <a href="{{ route('custom_admin.dashboard') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Dashboard Overview</a>
+                    <a href="{{ route('custom_admin.campaigns.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Manage Campaigns</a>
+                    <a href="{{ route('custom_admin.donations.index') }}" class="bg-primary-50 text-primary-700 block px-4 py-3 rounded-lg text-sm font-bold transition">Donations Ledger</a>
+                    <a href="{{ route('custom_admin.volunteers.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Volunteers</a>
                 </nav>
             </div>
         </div>
@@ -28,22 +28,25 @@
             <h1 class="text-3xl font-extrabold text-gray-900 mb-8">Donations Ledger</h1>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
-                <div class="p-6 border-b border-gray-100 flex flex-wrap gap-4 items-end bg-gray-50">
+                <form action="{{ route('custom_admin.donations.index') }}" method="GET" class="p-6 border-b border-gray-100 flex flex-wrap gap-4 items-end bg-gray-50">
                     <div class="flex-1 min-w-[200px]">
                         <label class="block text-sm font-bold text-gray-700 mb-2">Search Donor</label>
-                        <input type="text" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 py-2.5 px-4 border" placeholder="Name, email, or TXN ID...">
+                        <input type="text" name="search" value="{{ request('search') }}" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 py-2.5 px-4 border" placeholder="Name, email, or TXN ID...">
                     </div>
                     <div class="w-48">
                         <label class="block text-sm font-bold text-gray-700 mb-2">Status</label>
-                        <select class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 py-2.5 px-4 border bg-white">
-                            <option>All Statuses</option>
-                            <option>Completed</option>
-                            <option>Pending</option>
-                            <option>Failed</option>
+                        <select name="status" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 py-2.5 px-4 border bg-white">
+                            <option value="">All Statuses</option>
+                            <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
+                            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Failed</option>
                         </select>
                     </div>
-                    <button class="bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-800 transition shadow-md">Filter Results</button>
-                </div>
+                    <button type="submit" class="bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-800 transition shadow-md">Filter Results</button>
+                    @if(request()->anyFilled(['search', 'status']))
+                        <a href="{{ route('custom_admin.donations.index') }}" class="text-sm text-gray-500 hover:text-gray-700 mb-3 underline">Clear</a>
+                    @endif
+                </form>
                 
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">

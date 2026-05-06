@@ -11,12 +11,19 @@ class VolunteerHour extends Model
 
     protected $fillable = [
         'volunteer_id',
+        'volunteer_schedule_id',
         'date',
         'hours',
+        'status',
     ];
 
     public function volunteer()
     {
         return $this->belongsTo(Volunteer::class);
+    }
+
+    public function schedule()
+    {
+        return $this->belongsTo(VolunteerSchedule::class, 'volunteer_schedule_id');
     }
 }

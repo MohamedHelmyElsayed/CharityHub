@@ -10,9 +10,6 @@ use Illuminate\Support\Facades\DB;
 
 class CampaignService
 {
-    /**
-     * Update campaign's current_amount after a successful donation.
-     */
     public function updateProgress(Campaign $campaign, float $amount): void
     {
         DB::table('campaigns')
@@ -67,8 +64,9 @@ class CampaignService
     public function createCampaign(array $data): Campaign
     {
         if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
-            $data['featured_image'] = $data['image']->store('campaigns', 'public');
-            unset($data['image']);
+            $path = $data['image']->store('campaigns', 'public');
+            $data['image'] = $path;
+            $data['cover_image'] = $path;
         }
 
         $data['slug'] = \Illuminate\Support\Str::slug($data['title']);
@@ -84,8 +82,9 @@ class CampaignService
         $campaign = Campaign::findOrFail($id);
 
         if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
-            $data['featured_image'] = $data['image']->store('campaigns', 'public');
-            unset($data['image']);
+            $path = $data['image']->store('campaigns', 'public');
+            $data['image'] = $path;
+            $data['cover_image'] = $path;
         }
 
         if (isset($data['title']) && $data['title'] !== $campaign->title) {

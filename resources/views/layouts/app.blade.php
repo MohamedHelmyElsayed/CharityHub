@@ -8,6 +8,20 @@
     <title>@yield('title', 'CharityHub') — Empower Change</title>
     <meta name="description" content="@yield('meta_description', 'Join CharityHub to donate to impactful campaigns, volunteer your time, and track your real-world impact.')">
 
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="@yield('og_title', 'CharityHub — Empowering Global Change')">
+    <meta property="og:description" content="@yield('og_description', 'Donate, volunteer, and track impact with transparent charitable giving.')">
+    <meta property="og:image" content="@yield('og_image', asset('images/og-default.jpg'))">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ url()->current() }}">
+    <meta property="twitter:title" content="@yield('og_title', 'CharityHub — Empowering Global Change')">
+    <meta property="twitter:description" content="@yield('og_description', 'Donate, volunteer, and track impact with transparent charitable giving.')">
+    <meta property="twitter:image" content="@yield('og_image', asset('images/og-default.jpg'))">
+
     {{-- Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -64,7 +78,7 @@
             <div class="flex items-center space-x-6">
                 @auth
                     @if(auth()->user()->isAdmin() || auth()->user()->isEmployee())
-                        <a href="{{ route('admin.dashboard') }}" class="text-slate-600 hover:text-blue-600 text-sm font-semibold transition-colors">
+                        <a href="{{ route('custom_admin.dashboard') }}" class="text-slate-600 hover:text-blue-600 text-sm font-semibold transition-colors">
                             Admin Panel
                         </a>
                     @endif
@@ -79,7 +93,7 @@
                                     <p class="text-sm leading-5 font-medium text-slate-900 truncate">{{ auth()->user()->name }}</p>
                                     <p class="text-xs leading-5 font-medium text-slate-500 truncate">{{ auth()->user()->email }}</p>
                                 </div>
-                                <a href="{{ route('volunteer.dashboard') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">My Dashboard</a>
+                                <a href="{{ route('dashboard') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">My Dashboard</a>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">Sign out</button>

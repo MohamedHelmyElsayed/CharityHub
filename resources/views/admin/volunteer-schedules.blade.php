@@ -15,10 +15,10 @@
                     </h3>
                 </div>
                 <nav class="p-3 space-y-1">
-                    <a href="{{ route('admin.dashboard') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Dashboard Overview</a>
-                    <a href="{{ route('admin.campaigns.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Manage Campaigns</a>
-                    <a href="{{ route('admin.donations.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Donations Ledger</a>
-                    <a href="{{ route('admin.volunteers.index') }}" class="bg-primary-50 text-primary-700 block px-4 py-3 rounded-lg text-sm font-bold transition">Volunteers</a>
+                    <a href="{{ route('custom_admin.dashboard') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Dashboard Overview</a>
+                    <a href="{{ route('custom_admin.campaigns.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Manage Campaigns</a>
+                    <a href="{{ route('custom_admin.donations.index') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-4 py-3 rounded-lg text-sm font-semibold transition">Donations Ledger</a>
+                    <a href="{{ route('custom_admin.volunteers.index') }}" class="bg-primary-50 text-primary-700 block px-4 py-3 rounded-lg text-sm font-bold transition">Volunteers</a>
                 </nav>
             </div>
         </div>
@@ -64,7 +64,7 @@
 
                         @if($schedule->volunteers->count() < $schedule->max_volunteers)
                         <div class="pt-6 border-t border-gray-50">
-                            <form action="{{ route('admin.volunteer-schedules.assign', $schedule->id) }}" method="POST" class="flex gap-3">
+                            <form action="{{ route('custom_admin.volunteer-schedules.assign', $schedule->id) }}" method="POST" class="flex gap-3">
                                 @csrf
                                 <select name="volunteer_id" class="flex-1 border-gray-300 rounded-lg text-sm border p-2 bg-white" required>
                                     <option value="">Assign a volunteer...</option>

@@ -102,12 +102,17 @@ class DonationController extends Controller
         $sessionId = $request->get('session_id');
 
         // --- TEMP FOR LOCAL TESTING ---
-        // Since Paymob webhooks can't reach localhost, we simulate the webhook on the success redirect
+        // LOCAL TESTING ONLY: Simulate webhook for localhost
         if (app()->environment('local')) {
             $donation = \App\Models\Donation::where('status', 'pending')->latest()->first();
             if ($donation) {
-                $donation->update(['status' => 'completed']);
-                event(new \App\Events\DonationReceived($donation));
+                $updated = \App\Models\Donation::where('id', $donation->id)
+                    ->where('status', 'pending')
+                    ->update(['status' => 'completed']);
+                
+                if ($updated) {
+                    event(new \App\Events\DonationReceived($donation->refresh()));
+                }
             }
         }
         // ------------------------------
@@ -165,17 +170,21 @@ class DonationController extends Controller
             return;
         }
 
-        $donation->update([
-            'status' => 'completed',
-            'stripe_payment_intent_id' => $data['payment_intent'] ?? null,
-        ]);
-
-        // Update campaign progress
-        $this->campaignService->updateProgress($donation->campaign, (float) $donation->amount);
-
-        // Fire event → dispatches CertificateGenerationJob + LedgerEntryJob
-        \Illuminate\Support\Facades\Log::info('Firing DonationReceived Event', ['donation_id' => $donation->id]);
-        event(new DonationReceived($donation));
+        $updated = Donation::where('idempotency_key', $idempotencyKey)
+            ->where('status', 'pending')
+            ->update([
+                'status' => 'completed',
+                'stripe_payment_intent_id' => $data['payment_intent'] ?? null,
+            ]);
+        
+        if ($updated) {
+            $donation = Donation::where('idempotency_key', $idempotencyKey)->first();
+            // Fire event → handles progress update, certificate generation, and ledger entry
+            \Illuminate\Support\Facades\Log::info('Firing DonationReceived Event from Webhook', ['donation_id' => $donation->id]);
+            event(new DonationReceived($donation));
+        } else {
+            \Illuminate\Support\Facades\Log::info('Donation already processed or not found', ['idempotency_key' => $idempotencyKey]);
+        }
     }
 
     private function handleInvoicePaid(array $event): void
@@ -199,7 +208,6 @@ class DonationController extends Controller
             'ip_address' => null,
         ]);
 
-        $this->campaignService->updateProgress($donation->campaign, (float) $donation->amount);
         event(new DonationReceived($donation));
     }
 

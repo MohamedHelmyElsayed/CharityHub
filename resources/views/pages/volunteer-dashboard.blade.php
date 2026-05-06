@@ -130,9 +130,22 @@
                                         <td class="px-8 py-6 font-bold text-slate-900">{{ $schedule->event_name }}</td>
                                         <td class="px-8 py-6 text-slate-500 font-medium">{{ $schedule->event_date->format('M d, Y') }}</td>
                                         <td class="px-8 py-6">
-                                            <span class="px-3 py-1 bg-blue-50 text-blue-600 font-black rounded-lg text-sm">
-                                                {{ $schedule->pivot->hours_worked ?? '-' }}
-                                            </span>
+                                            @if(!$schedule->pivot->hours_worked && $schedule->event_date->isPast())
+                                                <form action="{{ route('volunteer.log-hours') }}" method="POST" class="flex items-center gap-2">
+                                                    @csrf
+                                                    <input type="hidden" name="schedule_id" value="{{ $schedule->id }}">
+                                                    <input type="number" name="hours" step="0.5" min="0.5" max="24" required 
+                                                           class="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500"
+                                                           placeholder="Hrs">
+                                                    <button type="submit" class="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span class="px-3 py-1 bg-blue-50 text-blue-600 font-black rounded-lg text-sm">
+                                                    {{ $schedule->pivot->hours_worked ?? '-' }}
+                                                </span>
+                                            @endif
                                         </td>
                                         <td class="px-8 py-6">
                                             <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 text-[10px] font-bold uppercase tracking-wider rounded-full">

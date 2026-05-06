@@ -23,13 +23,14 @@ class CampaignController extends Controller
 
     public function create()
     {
-        return view('admin.campaigns');
+        return view('admin.campaigns-form');
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'title' => 'required|string|max:255',
+            'short_description' => 'nullable|string|max:255',
             'description' => 'required|string',
             'goal_amount' => 'required|numeric|min:1',
             'deadline' => 'required|date|after:today',
@@ -40,19 +41,20 @@ class CampaignController extends Controller
 
         $this->campaignService->createCampaign($data);
 
-        return redirect()->route('admin.campaigns.index')->with('success', 'Campaign created successfully.');
+        return redirect()->route('custom_admin.campaigns.index')->with('success', 'Campaign created successfully.');
     }
 
     public function edit($id)
     {
         $campaign = $this->campaignService->getCampaignById($id);
-        return view('admin.campaigns', compact('campaign'));
+        return view('admin.campaigns-form', compact('campaign'));
     }
 
     public function update(Request $request, $id)
     {
         $data = $request->validate([
             'title' => 'required|string|max:255',
+            'short_description' => 'nullable|string|max:255',
             'description' => 'required|string',
             'goal_amount' => 'required|numeric|min:1',
             'deadline' => 'required|date',
@@ -64,12 +66,12 @@ class CampaignController extends Controller
 
         $this->campaignService->updateCampaign($id, $data);
 
-        return redirect()->route('admin.campaigns.index')->with('success', 'Campaign updated successfully.');
+        return redirect()->route('custom_admin.campaigns.index')->with('success', 'Campaign updated successfully.');
     }
 
     public function destroy($id)
     {
         $this->campaignService->deleteCampaign($id);
-        return redirect()->route('admin.campaigns.index')->with('success', 'Campaign deleted successfully.');
+        return redirect()->route('custom_admin.campaigns.index')->with('success', 'Campaign deleted successfully.');
     }
 }
