@@ -37,19 +37,16 @@ class CertificateController extends Controller
      */
     public function download(string $uuid)
     {
+        // Fix for browser translation extensions replacing hyphens with spaces
+        $uuid = str_replace(' ', '-', urldecode($uuid));
+
         $certificate = Certificate::where('uuid', $uuid)->firstOrFail();
 
-        if (!$certificate->certificate_path) {
-            abort(404, 'Certificate PDF not yet generated.');
+        if (!$certificate->certificate_path || !\Illuminate\Support\Facades\Storage::exists($certificate->certificate_path)) {
+            abort(404, 'Certificate PDF not yet generated or file not found.');
         }
 
-        $path = storage_path('app/' . $certificate->certificate_path);
-
-        if (!file_exists($path)) {
-            abort(404, 'Certificate file not found.');
-        }
-
-        return response()->download($path, 'CharityHub-Certificate-' . $uuid . '.pdf', [
+        return \Illuminate\Support\Facades\Storage::download($certificate->certificate_path, 'CharityHub-Certificate-' . $uuid . '.pdf', [
             'Content-Type' => 'application/pdf',
         ]);
     }

@@ -100,6 +100,18 @@ class DonationController extends Controller
     public function success(Request $request)
     {
         $sessionId = $request->get('session_id');
+
+        // --- TEMP FOR LOCAL TESTING ---
+        // Since Paymob webhooks can't reach localhost, we simulate the webhook on the success redirect
+        if (app()->environment('local')) {
+            $donation = \App\Models\Donation::where('status', 'pending')->latest()->first();
+            if ($donation) {
+                $donation->update(['status' => 'completed']);
+                event(new \App\Events\DonationReceived($donation));
+            }
+        }
+        // ------------------------------
+
         return view('pages.donate-success', compact('sessionId'));
     }
 

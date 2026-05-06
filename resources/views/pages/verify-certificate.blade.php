@@ -52,11 +52,18 @@
             </div>
 
             <div class="px-8 pb-8">
-                <p class="text-xs text-gray-400 text-center">Certificate ID: {{ $certificate->uuid }}</p>
-                <a href="{{ route('home') }}"
-                   class="mt-4 block w-full text-center px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors">
-                    Make Your Own Donation
-                </a>
+                <p class="text-xs text-gray-400 text-center mb-4">Certificate ID: {{ $certificate->uuid }}</p>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <a href="{{ route('certificates.download', $certificate->uuid) }}"
+                       class="flex-1 text-center px-6 py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Download PDF
+                    </a>
+                    <a href="{{ route('home') }}"
+                       class="flex-1 text-center px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center">
+                        Donate Now
+                    </a>
+                </div>
             </div>
         </div>
     </div>

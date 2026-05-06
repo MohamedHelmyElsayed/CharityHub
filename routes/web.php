@@ -36,8 +36,7 @@ Route::get('/donate/cancel', [DonationController::class, 'cancel'])->name('donat
 // ─── Certificate Verification ────────────────────────────────────────────────
 Route::get('/verify/{uuid}', [CertificateController::class, 'verify'])->name('verify.certificate');
 Route::get('/certificates/{uuid}/download', [CertificateController::class, 'download'])
-    ->name('certificates.download')
-    ->middleware('auth');
+    ->name('certificates.download');
 
 // ─── Volunteer Routes ─────────────────────────────────────────────────────────
 Route::get('/volunteer', [VolunteerController::class, 'index'])->name('volunteer.index');
