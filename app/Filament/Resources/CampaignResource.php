@@ -39,6 +39,16 @@ class CampaignResource extends Resource
                     ->default(0),
                 Forms\Components\DatePicker::make('deadline')
                     ->required(),
+                Forms\Components\Select::make('category')
+                    ->options([
+                        'emergency' => 'Emergency',
+                        'education' => 'Education',
+                        'health' => 'Health',
+                        'water' => 'Clean Water',
+                        'other' => 'Other',
+                    ])
+                    ->required()
+                    ->default('other'),
                 Forms\Components\FileUpload::make('image')
                     ->image(),
                 Forms\Components\TextInput::make('status')
@@ -56,6 +66,15 @@ class CampaignResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('title')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('category')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'emergency' => 'danger',
+                        'education' => 'info',
+                        'health' => 'success',
+                        'water' => 'warning',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('goal_amount')
                     ->numeric()
                     ->sortable(),

@@ -10,10 +10,16 @@ class CampaignController extends Controller
 {
     public function index(Request $request)
     {
-        $campaigns = Campaign::active()
-            ->orderByDesc('featured')
+        $query = Campaign::active();
+
+        if ($request->has('category') && $request->category !== 'all') {
+            $query->where('category', $request->category);
+        }
+
+        $campaigns = $query->orderByDesc('featured')
             ->orderByDesc('created_at')
-            ->paginate(9);
+            ->paginate(9)
+            ->withQueryString();
 
         return view('pages.campaigns', compact('campaigns'));
     }

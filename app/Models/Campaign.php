@@ -26,6 +26,7 @@ class Campaign extends Model
         'og_description',
         'lat',
         'long',
+        'category',
     ];
 
     protected $casts = [
