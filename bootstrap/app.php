@@ -11,6 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Prevent browser back-button from showing cached authenticated pages after logout
+        $middleware->append(\App\Http\Middleware\PreventBackHistory::class);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
@@ -18,8 +21,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
             'webhook',
-            'login',
-            'logout',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

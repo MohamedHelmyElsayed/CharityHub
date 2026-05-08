@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Volunteer extends Model
 {
@@ -41,6 +42,17 @@ class Volunteer extends Model
             ->withTimestamps();
     }
 
+    /**
+     * Sum hours_worked from the pivot table for all attended events.
+     * Uses a direct DB query for SQLite/MySQL compatibility.
+     */
+    public function getTotalHoursAttribute(): float
+    {
+        return (float) DB::table('volunteer_schedule_user')
+            ->where('volunteer_id', $this->id)
+            ->where('status', 'attended')
+            ->sum('hours_worked');
+    }
 
     /**
      * Detect scheduling conflicts: check if volunteer is already booked

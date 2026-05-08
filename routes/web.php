@@ -66,7 +66,7 @@ Route::get('/my-dashboard', [UserDashboardController::class, 'index'])->name('us
 
 // ─── Impact Reports ───────────────────────────────────────────────────────────
 Route::get('/impact', [ImpactReportController::class, 'index'])->name('impact.index');
-Route::get('/impact/{report}', [ImpactReportController::class, 'show'])->name('impact.show');
+Route::get('/impact/{report:slug}', [ImpactReportController::class, 'show'])->name('impact.show');
 
 // ─── Stripe Webhook (excluded from CSRF in bootstrap/app.php) ────────────────
 Route::post('/stripe/webhook', [DonationController::class, 'webhook'])->name('stripe.webhook');

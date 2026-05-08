@@ -12,9 +12,15 @@ class CampaignService
 {
     public function updateProgress(Campaign $campaign, float $amount): void
     {
+        // Idempotent: recalculate from actual completed donations so
+        // double-fired events (webhook + success redirect) never double-count.
+        $total = Donation::where('campaign_id', $campaign->id)
+            ->where('status', 'completed')
+            ->sum('amount');
+
         DB::table('campaigns')
             ->where('id', $campaign->id)
-            ->increment('current_amount', $amount);
+            ->update(['current_amount' => $total]);
 
         // Auto-end campaign if goal reached
         $campaign->refresh();

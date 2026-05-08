@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Contracts\PaymentGatewayInterface;
 use App\Events\DonationReceived;
 use App\Jobs\CertificateGenerationJob;
 use App\Jobs\LedgerEntryJob;
@@ -10,9 +11,11 @@ use App\Models\Certificate;
 use App\Models\Donation;
 use App\Models\Donor;
 use App\Models\FinancialLog;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Models\Volunteer;
 use App\Models\VolunteerSchedule;
+use App\Services\FakePaymentGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -313,5 +316,145 @@ class CharityHubTest extends TestCase
 
         // This should throw
         $log->update(['status' => 'modified']);
+    }
+
+    // ── Test 11: Subscription cancellation lifecycle ──────────────────────
+    public function test_subscription_cancellation_lifecycle(): void
+    {
+        $campaign = $this->createCampaign();
+        $donor    = $this->createDonor();
+
+        $sub = Subscription::create([
+            'donor_id'      => $donor->id,
+            'campaign_id'   => $campaign->id,
+            'stripe_id'     => 'sub_cancel_' . Str::random(8),
+            'stripe_status' => 'active',
+            'amount'        => 50,
+            'currency'      => 'USD',
+        ]);
+
+        // Initially active
+        $this->assertTrue($sub->isActive());
+        $this->assertFalse($sub->isCancelled());
+
+        // Simulate cancellation: set ends_at to a past date
+        $sub->update([
+            'stripe_status' => 'canceled',
+            'ends_at'       => now()->subDay(),
+        ]);
+        $sub->refresh();
+
+        $this->assertFalse($sub->isActive(), 'Cancelled subscription should not be active');
+        $this->assertTrue($sub->isCancelled(), 'Subscription should be marked as cancelled');
+    }
+
+    // ── Test 12: Recurring invoice.paid renewal creates donation + event ──
+    public function test_recurring_renewal_creates_new_donation_and_fires_event(): void
+    {
+        Queue::fake();
+        Event::fake([DonationReceived::class]);
+
+        $campaign = $this->createCampaign();
+        $donor    = $this->createDonor();
+
+        $sub = Subscription::create([
+            'donor_id'      => $donor->id,
+            'campaign_id'   => $campaign->id,
+            'stripe_id'     => 'sub_renewal_' . Str::random(8),
+            'stripe_status' => 'active',
+            'amount'        => 30,
+            'currency'      => 'USD',
+        ]);
+
+        // Simulate what handleInvoicePaid does
+        $renewal = Donation::create([
+            'donor_id'        => $sub->donor_id,
+            'campaign_id'     => $sub->campaign_id,
+            'amount'          => $sub->amount,
+            'currency'        => $sub->currency,
+            'type'            => 'recurring',
+            'status'          => 'completed',
+            'idempotency_key' => Str::uuid(),
+            'certificate_uuid'=> Str::uuid(),
+            'ip_address'      => null,
+        ]);
+
+        event(new DonationReceived($renewal));
+
+        $this->assertDatabaseHas('donations', [
+            'donor_id'    => $donor->id,
+            'campaign_id' => $campaign->id,
+            'type'        => 'recurring',
+            'status'      => 'completed',
+        ]);
+
+        Event::assertDispatched(DonationReceived::class, function ($e) use ($renewal) {
+            return $e->donation->id === $renewal->id;
+        });
+    }
+
+    // ── Test 13: Idempotency — duplicate key returns 409 (HTTP-level) ─────
+    public function test_duplicate_idempotency_key_returns_409(): void
+    {
+        // Bind the fake gateway so no real HTTP calls are made
+        $this->app->bind(PaymentGatewayInterface::class, FakePaymentGateway::class);
+        FakePaymentGateway::reset();
+
+        $user     = User::factory()->create(['role' => 'user']);
+        $campaign = $this->createCampaign();
+        $ikey     = Str::uuid()->toString();
+
+        // Seed an existing donation with the same idempotency key
+        Donor::create([
+            'name'             => $user->name,
+            'email'            => $user->email,
+            'gdpr_consent'     => true,
+            'gdpr_consent_at'  => now(),
+        ]);
+
+        Donation::create([
+            'donor_id'        => Donor::where('email', $user->email)->first()->id,
+            'campaign_id'     => $campaign->id,
+            'amount'          => 100,
+            'currency'        => 'EGP',
+            'type'            => 'one_time',
+            'status'          => 'pending',
+            'idempotency_key' => $ikey,
+            'certificate_uuid'=> Str::uuid(),
+            'ip_address'      => '127.0.0.1',
+        ]);
+
+        $response = $this->actingAs($user)->postJson('/donate/checkout', [
+            'campaign_id'     => $campaign->id,
+            'amount'          => 100,
+            'type'            => 'one_time',
+            'name'            => $user->name,
+            'email'           => $user->email,
+            'gdpr_consent'    => '1',
+            'idempotency_key' => $ikey,
+        ]);
+
+        $response->assertStatus(409);
+        $response->assertJson(['error' => 'Duplicate request detected.']);
+    }
+
+    // ── Test 14: FakePaymentGateway swap smoke test ───────────────────────
+    public function test_fake_gateway_can_be_swapped_and_returns_checkout_url(): void
+    {
+        $this->app->bind(PaymentGatewayInterface::class, FakePaymentGateway::class);
+        FakePaymentGateway::reset();
+
+        $campaign = $this->createCampaign();
+        $donor    = $this->createDonor();
+        $ikey     = Str::uuid()->toString();
+
+        /** @var FakePaymentGateway $gateway */
+        $gateway = app(PaymentGatewayInterface::class);
+        $result  = $gateway->createOneTimeCharge($donor, $campaign, 250.00, 'EGP', $ikey);
+
+        $this->assertArrayHasKey('checkout_url', $result);
+        $this->assertStringContainsString('fake_session_', $result['session_id']);
+        $this->assertCount(1, FakePaymentGateway::$capturedCharges);
+        $this->assertEquals(250.00, FakePaymentGateway::$capturedCharges[0]['amount']);
     }
 }

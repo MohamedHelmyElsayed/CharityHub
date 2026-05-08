@@ -21,12 +21,14 @@
                     <x-nav-link :href="route('campaigns.index')" :active="request()->routeIs('campaigns.*')">
                         {{ __('Campaigns') }}
                     </x-nav-link>
+                    @if(auth()->guest() || (auth()->check() && auth()->user()->role === 'user'))
                     <x-nav-link :href="route('volunteer.index')" :active="request()->routeIs('volunteer.index')">
                         {{ __('Volunteer') }}
                     </x-nav-link>
+                    @endif
                     @auth
                         @if(auth()->user()->role !== 'user')
-                            <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
+                            <x-nav-link :href="route('custom_admin.dashboard')" :active="request()->routeIs('custom_admin.*')">
                                 {{ __('Admin Panel') }}
                             </x-nav-link>
                         @endif
@@ -37,6 +39,12 @@
             <!-- Right Side -->
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-4">
                 @auth
+                    @if(auth()->user()->role === 'user')
+                    <a href="{{ route('donate') }}" 
+                       class="text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 px-5 py-2.5 rounded-xl shadow-lg shadow-primary-500/20 transition transform hover:-translate-y-0.5">
+                        Donate Now
+                    </a>
+                    @endif
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
                             <button class="inline-flex items-center px-4 py-2 border border-gray-200 text-sm leading-4 font-bold rounded-xl text-gray-700 bg-gray-50 hover:bg-white hover:border-gray-300 focus:outline-none transition ease-in-out duration-150">
@@ -67,7 +75,7 @@
                     </x-dropdown>
                 @else
                     <a href="{{ route('login') }}" class="text-sm font-bold text-gray-600 hover:text-gray-900 px-4 py-2 transition">Login</a>
-                    <a href="{{ route('register') }}" class="text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 px-5 py-2.5 rounded-xl shadow-lg shadow-primary-500/20 transition transform hover:-translate-y-0.5">Join Now</a>
+                    <a href="{{ route('donate') }}" class="text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 px-5 py-2.5 rounded-xl shadow-lg shadow-primary-500/20 transition transform hover:-translate-y-0.5">Donate Now</a>
                 @endauth
             </div>
 
@@ -92,9 +100,11 @@
             <x-responsive-nav-link :href="route('campaigns.index')" :active="request()->routeIs('campaigns.*')">
                 {{ __('Campaigns') }}
             </x-responsive-nav-link>
+            @if(auth()->guest() || (auth()->check() && auth()->user()->role === 'user'))
             <x-responsive-nav-link :href="route('volunteer.index')" :active="request()->routeIs('volunteer.index')">
                 {{ __('Volunteer') }}
             </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

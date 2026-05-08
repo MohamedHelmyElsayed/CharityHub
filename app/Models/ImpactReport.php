@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class ImpactReport extends Model
 {
@@ -12,6 +13,7 @@ class ImpactReport extends Model
     protected $fillable = [
         'campaign_id',
         'title',
+        'slug',
         'outcomes_narrative',
         'beneficiary_count',
         'funds_used',
@@ -20,6 +22,27 @@ class ImpactReport extends Model
         'pdf_path',
         'pdf_generated_at',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (ImpactReport $report) {
+            if (empty($report->slug)) {
+                $base = Str::slug($report->title);
+                $slug = $base;
+                $i = 1;
+                while (static::where('slug', $slug)->exists()) {
+                    $slug = $base . '-' . $i++;
+                }
+                $report->slug = $slug;
+            }
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
 
     protected $casts = [
         'funds_used' => 'decimal:2',
