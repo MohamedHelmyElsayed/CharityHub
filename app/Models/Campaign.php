@@ -95,6 +95,11 @@ class Campaign extends Model
         return $query->where('status', 'active');
     }
 
+    public function scopeEnded($query)
+    {
+        return $query->where('status', 'ended');
+    }
+
     public function scopeFeatured($query)
     {
         return $query->where('featured', true);
