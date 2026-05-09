@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\VolunteerController;
@@ -23,6 +25,21 @@ Route::post('/register', [RegisterController::class, 'register'])->middleware('g
 // ─── Google OAuth ────────────────────────────────────────────────────────────
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google')->middleware('guest');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
+
+// ─── Email Verification Routes ───────────────────────────────────────────────
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
+
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+    return redirect()->route('dashboard');
+})->middleware(['auth', 'signed'])->name('verification.verify');
+
+Route::post('/email/verification-notification', function (Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+    return back()->with('message', 'Verification link sent!');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
 // ─── Public Campaign Routes ─────────────────────────────────────────────────
 Route::get('/', function () {
@@ -49,7 +66,7 @@ Route::get('/certificates/{uuid}/download', [CertificateController::class, 'down
 Route::get('/volunteer', [VolunteerController::class, 'index'])->name('volunteer.index');
 Route::get('/volunteer/profile', [VolunteerController::class, 'profile'])->name('volunteer.profile.edit')->middleware('auth');
 Route::post('/volunteer/register', [VolunteerController::class, 'register'])->name('volunteer.register')->middleware('auth');
-Route::get('/volunteer/dashboard', [VolunteerController::class, 'dashboard'])->name('volunteer.dashboard')->middleware('auth');
+Route::get('/volunteer/dashboard', [VolunteerController::class, 'dashboard'])->name('volunteer.dashboard')->middleware(['auth', 'verified']);
 Route::get('/volunteer/schedules/{schedule}', [VolunteerController::class, 'showSchedule'])->name('volunteer.schedule.show')->middleware('auth');
 Route::post('/volunteer/hours', [VolunteerController::class, 'logHours'])->name('volunteer.hours')->middleware('auth');
 Route::post('/volunteer/slot-requests', [\App\Http\Controllers\VolunteerSlotController::class, 'store'])->name('volunteer.slot-requests.store')->middleware('auth');
@@ -67,9 +84,9 @@ Route::get('/dashboard', function () {
     }
 
     return redirect()->route('user.dashboard');
-})->middleware('auth')->name('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/my-dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard')->middleware('auth');
+Route::get('/my-dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard')->middleware(['auth', 'verified']);
 
 // ─── Impact Reports ───────────────────────────────────────────────────────────
 Route::get('/impact', [ImpactReportController::class, 'index'])->name('impact.index');
