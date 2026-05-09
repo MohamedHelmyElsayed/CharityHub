@@ -1,4 +1,4 @@
-<div wire:poll.3s="refreshData">
+<div wire:poll.2s="refreshData">
     @if($campaign)
     <div class="space-y-4">
         <div class="text-center">
