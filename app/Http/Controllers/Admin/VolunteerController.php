@@ -17,8 +17,9 @@ class VolunteerController extends Controller
 
     public function index()
     {
-        $volunteers = $this->volunteerService->getAllVolunteers();
-        return view('admin.volunteers', compact('volunteers'));
+        $pendingVolunteers = \App\Models\Volunteer::with(['user', 'schedules.campaign'])->where('status', 'pending')->get();
+        $activeVolunteers = \App\Models\Volunteer::with('user')->where('status', 'active')->get();
+        return view('admin.volunteers', compact('pendingVolunteers', 'activeVolunteers'));
     }
 
     public function show($id)
@@ -31,7 +32,7 @@ class VolunteerController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:active,inactive',
+            'status' => 'required|in:active,inactive,pending,rejected',
         ]);
 
         $volunteer = \App\Models\Volunteer::findOrFail($id);

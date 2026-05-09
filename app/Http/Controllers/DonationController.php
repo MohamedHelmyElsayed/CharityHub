@@ -46,6 +46,10 @@ class DonationController extends Controller
 
         $campaign = Campaign::findOrFail($validated['campaign_id']);
 
+        if ($campaign->status === 'ended') {
+            return back()->with('error', 'This campaign has reached its goal and is no longer accepting donations.');
+        }
+
         // Idempotency check
         $existing = Donation::where('idempotency_key', $validated['idempotency_key'])->first();
         if ($existing) {

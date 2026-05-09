@@ -75,32 +75,24 @@
                             <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
                             <h3 class="text-xl font-bold text-slate-900">Choose an Event <span class="text-slate-400 font-normal text-sm ml-2">(Optional)</span></h3>
                         </div>
-                        <div class="grid grid-cols-1 gap-4">
-                            @forelse($schedules as $schedule)
+
+                        {{-- Event Selection Dropdown --}}
+                        <div class="space-y-2">
+                            <label class="block text-sm font-bold text-slate-700 ml-1">Select an Event</label>
                             <div class="relative">
-                                <input type="radio" name="schedule_id" id="event_{{ $schedule->id }}" value="{{ $schedule->id }}" class="peer absolute opacity-0">
-                                <label for="event_{{ $schedule->id }}" 
-                                       class="flex items-center p-5 bg-slate-50 border-2 border-transparent rounded-3xl cursor-pointer hover:bg-white hover:border-slate-200 transition-all peer-checked:bg-blue-50 peer-checked:border-blue-600 shadow-sm">
-                                    <div class="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex flex-col items-center justify-center text-slate-900 shadow-sm mr-5">
-                                        <span class="text-xl font-black leading-none">{{ $schedule->event_date->format('d') }}</span>
-                                        <span class="text-[8px] font-bold uppercase tracking-widest">{{ $schedule->event_date->format('M') }}</span>
-                                    </div>
-                                    <div class="flex-grow min-w-0">
-                                        <div class="text-lg font-bold text-slate-900 mb-0.5 truncate">{{ $schedule->event_name }}</div>
-                                        <div class="text-xs text-slate-500 font-semibold truncate">
-                                            {{ $schedule->location_name ?? $schedule->location }} • {{ $schedule->start_time->format('H:i') }}
-                                        </div>
-                                    </div>
-                                    <div class="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center transition-all ml-4 bg-white peer-checked:border-blue-600">
-                                        <div class="w-2.5 h-2.5 rounded-full bg-blue-600 opacity-0 transition-opacity peer-checked:opacity-100"></div>
-                                    </div>
-                                </label>
+                                <select name="schedule_id" id="event_selector" class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all font-medium appearance-none">
+                                    <option value="">-- General Volunteering (No specific event) --</option>
+                                    @foreach($schedules as $schedule)
+                                        <option value="{{ $schedule->id }}">
+                                            {{ $schedule->event_date->format('M d, Y') }} | {{ $schedule->event_name }} ({{ $schedule->campaign->title }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
+                                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                </div>
                             </div>
-                            @empty
-                            <div class="py-12 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
-                                <p class="text-slate-400 font-medium italic">No events scheduled at this time.</p>
-                            </div>
-                            @endforelse
+                            <p class="text-xs text-slate-500 ml-1 mt-2">Select an event you wish to participate in, or leave empty for general volunteering.</p>
                         </div>
                     </div>
 
@@ -130,17 +122,5 @@
     </div>
 </div>
 
-<style>
-    /* Manual peer checking because Tailwind's peer class needs specific structure */
-    input:checked + label {
-        border-color: #2563eb !important;
-        background-color: #eff6ff !important;
-    }
-    input:checked + label .w-6.h-6 {
-        border-color: #2563eb !important;
-    }
-    input:checked + label .w-2.5.h-2.5 {
-        opacity: 1 !important;
-    }
-</style>
+
 @endsection

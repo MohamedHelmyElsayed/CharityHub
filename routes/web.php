@@ -47,6 +47,8 @@ Route::post('/volunteer/register', [VolunteerController::class, 'register'])->na
 Route::get('/volunteer/dashboard', [VolunteerController::class, 'dashboard'])->name('volunteer.dashboard')->middleware('auth');
 Route::get('/volunteer/schedules/{schedule}', [VolunteerController::class, 'showSchedule'])->name('volunteer.schedule.show')->middleware('auth');
 Route::post('/volunteer/hours', [VolunteerController::class, 'logHours'])->name('volunteer.hours')->middleware('auth');
+Route::post('/volunteer/slot-requests', [\App\Http\Controllers\VolunteerSlotController::class, 'store'])->name('volunteer.slot-requests.store')->middleware('auth');
+Route::patch('/volunteer/slot-requests/{id}/complete', [\App\Http\Controllers\VolunteerSlotController::class, 'markComplete'])->name('volunteer.slot-requests.complete')->middleware('auth');
 
 // ─── Dashboard Redirection ──────────────────────────────────────────────────
 Route::get('/dashboard', function () {
@@ -105,6 +107,11 @@ Route::prefix('admin')->name('custom_admin.')->middleware(['auth', 'role:admin,e
     // Volunteer Hour Approval
     Route::get('/volunteer-hours', [\App\Http\Controllers\Admin\VolunteerHourController::class, 'index'])->name('volunteer-hours.index');
     Route::post('/volunteer-hours/{log}/approve', [\App\Http\Controllers\Admin\VolunteerHourController::class, 'approve'])->name('volunteer-hours.approve');
+
+    // Volunteer Slot Requests
+    Route::get('/volunteer-slots', [\App\Http\Controllers\Admin\VolunteerSlotController::class, 'index'])->name('volunteer-slots.index');
+    Route::patch('/volunteer-slots/{id}/approve', [\App\Http\Controllers\Admin\VolunteerSlotController::class, 'approve'])->name('volunteer-slots.approve');
+    Route::patch('/volunteer-slots/{id}/reject', [\App\Http\Controllers\Admin\VolunteerSlotController::class, 'reject'])->name('volunteer-slots.reject');
 
     // Impact Reports Resource (Changed URL to avoid Filament conflict)
     Route::resource('manage-impact-reports', \App\Http\Controllers\Admin\ImpactReportController::class)->names([

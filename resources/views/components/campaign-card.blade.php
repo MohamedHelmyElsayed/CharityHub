@@ -24,7 +24,7 @@
             @if($campaign->status === 'active')
                 <span class="px-3 py-1.5 bg-blue-600/90 backdrop-blur-md text-white text-xs font-bold rounded-xl shadow-sm border border-blue-500/50">Active</span>
             @elseif($campaign->status === 'ended')
-                <span class="px-3 py-1.5 bg-slate-800/90 backdrop-blur-md text-white text-xs font-bold rounded-xl shadow-sm border border-slate-700/50">Ended</span>
+                <span class="px-3 py-1.5 bg-emerald-600/90 backdrop-blur-md text-white text-xs font-bold rounded-xl shadow-sm border border-emerald-500/50">Goal Reached</span>
             @else
                 <span class="px-3 py-1.5 bg-slate-100/90 backdrop-blur-md text-slate-600 text-xs font-bold rounded-xl shadow-sm border border-slate-200/50">Draft</span>
             @endif
@@ -76,7 +76,7 @@
                 </div>
                 <a href="{{ route('campaigns.show', $campaign->slug ?? $campaign->id) }}"
                    class="inline-flex items-center justify-center px-5 py-2.5 bg-slate-900 text-white text-sm font-semibold rounded-xl hover:bg-blue-600 transition-colors duration-300">
-                    Donate
+                    {{ $campaign->status === 'ended' ? 'View Details' : 'Donate' }}
                 </a>
             </div>
         </div>

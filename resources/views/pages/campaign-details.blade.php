@@ -66,10 +66,20 @@
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sticky top-20">
                 @livewire('campaign-progress', ['campaignId' => $campaign->id])
 
-                <a href="{{ route('donate') }}?campaign_id={{ $campaign->id }}"
-                   class="block w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white text-center font-bold rounded-xl transition-all shadow-md hover:shadow-emerald-200 mt-6">
-                    Donate to This Campaign
-                </a>
+                @if($campaign->status === 'ended')
+                    <div class="mt-6 p-4 bg-slate-100 border border-slate-200 rounded-xl text-center">
+                        <div class="flex items-center justify-center w-10 h-10 mx-auto bg-emerald-100 text-emerald-600 rounded-full mb-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        <h4 class="font-bold text-slate-900">Goal Reached!</h4>
+                        <p class="text-sm text-slate-500 mt-1">This campaign is fully funded and closed to new donations.</p>
+                    </div>
+                @else
+                    <a href="{{ route('donate') }}?campaign_id={{ $campaign->id }}"
+                       class="block w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white text-center font-bold rounded-xl transition-all shadow-md hover:shadow-emerald-200 mt-6">
+                        Donate to This Campaign
+                    </a>
+                @endif
             </div>
 
             {{-- Impact Reports --}}

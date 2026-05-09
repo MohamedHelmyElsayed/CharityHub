@@ -27,6 +27,10 @@
                class="{{ request()->routeIs('custom_admin.schedules.*') || request()->routeIs('custom_admin.volunteer-schedules.*') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold' }} block px-4 py-3 rounded-lg text-sm transition">
                 Event Schedules
             </a>
+            <a href="{{ route('custom_admin.volunteer-slots.index') }}" 
+               class="{{ request()->routeIs('custom_admin.volunteer-slots.*') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold' }} block px-4 py-3 rounded-lg text-sm transition">
+                Slot Requests
+            </a>
             <a href="{{ route('custom_admin.volunteer-hours.index') }}" 
                class="{{ request()->routeIs('custom_admin.volunteer-hours.*') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold' }} block px-4 py-3 rounded-lg text-sm transition">
                 Hour Logs

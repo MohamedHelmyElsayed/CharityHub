@@ -21,7 +21,7 @@ class CampaignSearch extends Component
 
     public function render()
     {
-        $campaigns = Campaign::active()
+        $campaigns = Campaign::whereIn('status', ['active', 'ended'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('title', 'like', '%' . $this->search . '%')

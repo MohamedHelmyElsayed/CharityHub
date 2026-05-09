@@ -86,6 +86,110 @@
 
             {{-- Main Content --}}
             <div class="lg:w-2/3 space-y-12">
+                {{-- Custom Schedule Booking --}}
+                <section>
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Book a Custom Slot</h2>
+                    </div>
+                    <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8">
+                        <form action="{{ route('volunteer.slot-requests.store') }}" method="POST" class="space-y-6">
+                            @csrf
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-bold text-slate-700 ml-1">Campaign (Optional)</label>
+                                    <select name="campaign_id" class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium appearance-none">
+                                        <option value="">-- General Volunteering --</option>
+                                        @foreach($campaigns as $campaign)
+                                            <option value="{{ $campaign->id }}">{{ $campaign->title }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-bold text-slate-700 ml-1">Date</label>
+                                    <input type="date" name="requested_date" required min="{{ date('Y-m-d') }}"
+                                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-bold text-slate-700 ml-1">Start Time</label>
+                                    <input type="time" name="requested_start_time" required
+                                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-bold text-slate-700 ml-1">End Time</label>
+                                    <input type="time" name="requested_end_time" required
+                                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium">
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-bold text-slate-700 ml-1">Notes (Optional)</label>
+                                <textarea name="notes" rows="2" placeholder="What are you planning to do?"
+                                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium resize-none"></textarea>
+                            </div>
+                            <button type="submit" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-lg rounded-2xl transition-all shadow-lg shadow-blue-500/30">
+                                Request Slot
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                {{-- My Slot Requests --}}
+                <section>
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">My Custom Slots</h2>
+                    </div>
+                    <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="border-b border-slate-50">
+                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date / Time</th>
+                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Campaign</th>
+                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50">
+                                    @forelse($slotRequests as $req)
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-8 py-6">
+                                            <div class="font-bold text-slate-900">{{ $req->requested_date->format('M d, Y') }}</div>
+                                            <div class="text-xs text-slate-500">{{ $req->requested_start_time->format('H:i') }} - {{ $req->requested_end_time->format('H:i') }}</div>
+                                        </td>
+                                        <td class="px-8 py-6 text-sm text-slate-600">{{ $req->campaign?->title ?? 'General' }}</td>
+                                        <td class="px-8 py-6">
+                                            @if($req->status === 'approved')
+                                                <span class="px-3 py-1 bg-green-50 text-green-600 text-xs font-bold rounded-full">Approved</span>
+                                            @elseif($req->status === 'rejected')
+                                                <span class="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full">Rejected</span>
+                                            @else
+                                                <span class="px-3 py-1 bg-amber-50 text-amber-600 text-xs font-bold rounded-full">Pending</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-8 py-6">
+                                            @if($req->status === 'approved' && !$req->completed_at && $req->requested_date <= today())
+                                                <form action="{{ route('volunteer.slot-requests.complete', $req->id) }}" method="POST">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700">Mark Complete</button>
+                                                </form>
+                                            @elseif($req->completed_at)
+                                                <span class="text-xs text-slate-400 font-bold">Completed</span>
+                                            @else
+                                                <span class="text-xs text-slate-400">-</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="4" class="px-8 py-10 text-center text-slate-400 italic">No custom slot requests found.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
                 {{-- Upcoming Events --}}
                 <section>
                     <div class="flex items-center justify-between mb-8">

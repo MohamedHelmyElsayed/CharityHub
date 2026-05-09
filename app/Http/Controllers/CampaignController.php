@@ -10,7 +10,7 @@ class CampaignController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Campaign::active();
+        $query = Campaign::whereIn('status', ['active', 'ended']);
 
         if ($request->has('category') && $request->category !== 'all') {
             $query->where('category', $request->category);

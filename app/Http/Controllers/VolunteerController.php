@@ -10,16 +10,22 @@ class VolunteerController extends Controller
 {
     public function index()
     {
-        $schedules = VolunteerSchedule::where('status', 'scheduled')
+        $schedules = VolunteerSchedule::with('campaign')
+            ->where('status', 'scheduled')
             ->where('event_date', '>=', today())
             ->orderBy('event_date')
             ->get();
+
+        $campaigns = \App\Models\Campaign::active()->whereHas('volunteerSchedules', function($q) {
+            $q->where('status', 'scheduled')
+              ->where('event_date', '>=', today());
+        })->get();
 
         $myVolunteer = auth()->check()
             ? auth()->user()->volunteer
             : null;
 
-        return view('pages.volunteer', compact('schedules', 'myVolunteer'));
+        return view('pages.volunteer', compact('schedules', 'campaigns', 'myVolunteer'));
     }
 
     public function profile()
@@ -57,7 +63,7 @@ class VolunteerController extends Controller
                 'phone' => $validated['phone'] ?? null,
                 'skills' => $skillsArray,
                 'bio' => $validated['bio'] ?? null,
-                'status' => 'active',
+                'status' => 'pending',
             ]
         );
 
@@ -136,6 +142,15 @@ class VolunteerController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        // Slot Requests
+        $slotRequests = \App\Models\VolunteerSlotRequest::with('campaign')
+            ->where('volunteer_id', $volunteer->id)
+            ->orderByDesc('requested_date')
+            ->get();
+            
+        // Campaigns for slot request form
+        $campaigns = \App\Models\Campaign::active()->get();
+
         return view('pages.volunteer-dashboard', compact(
             'volunteer', 
             'upcomingSchedules', 
@@ -143,7 +158,9 @@ class VolunteerController extends Controller
             'donationStats', 
             'recentDonations', 
             'certificates',
-            'hourLogs'
+            'hourLogs',
+            'slotRequests',
+            'campaigns'
         ));
     }
 
