@@ -27,4 +27,17 @@ class ImpactReportController extends Controller
 
         return view('pages.impact-report', compact('report'));
     }
+
+    public function downloadPdf(ImpactReport $report)
+    {
+        if ($report->status !== 'published') {
+            abort(404);
+        }
+
+        $report->load(['campaign', 'locations']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.impact-report-pdf', compact('report'));
+        
+        return $pdf->download('Impact-Report-'.$report->slug.'.pdf');
+    }
 }

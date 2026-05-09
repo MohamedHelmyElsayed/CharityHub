@@ -53,9 +53,8 @@
                 {!! nl2br(e($report->outcomes_narrative)) !!}
             </div>
 
-            @if($report->pdf_path)
             <div class="mt-8 pt-8 border-t border-slate-100">
-                <a href="{{ Storage::url($report->pdf_path) }}" target="_blank"
+                <a href="{{ $report->pdf_path ? Storage::url($report->pdf_path) : route('impact.download-pdf', $report->slug) }}" target="_blank"
                    class="inline-flex items-center gap-2 px-6 py-3.5 bg-slate-900 text-white rounded-xl hover:bg-blue-600 transition-colors duration-300 font-bold shadow-lg shadow-slate-900/10 hover:shadow-blue-500/25">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -63,7 +62,6 @@
                     Download Official PDF Report
                 </a>
             </div>
-            @endif
         </div>
 
         {{-- Google Map --}}
