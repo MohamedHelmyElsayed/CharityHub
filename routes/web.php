@@ -9,6 +9,7 @@ use App\Http\Controllers\ImpactReportController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\StaffDashboardController;
 
@@ -18,6 +19,10 @@ Route::post('/login', [LoginController::class, 'login'])->middleware('guest');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register')->middleware('guest');
 Route::post('/register', [RegisterController::class, 'register'])->middleware('guest');
+
+// ─── Google OAuth ────────────────────────────────────────────────────────────
+Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google')->middleware('guest');
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
 
 // ─── Public Campaign Routes ─────────────────────────────────────────────────
 Route::get('/', function () {

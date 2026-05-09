@@ -21,15 +21,15 @@
                 Your contribution has been received successfully. You've just taken a step towards changing lives. We'll send a confirmation email with your impact certificate shortly.
             </p>
 
-            <div class="bg-slate-50 rounded-2xl p-6 mb-10 border border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-6">
-                <div class="text-left">
+            <div class="bg-slate-50 rounded-2xl p-6 mb-10 border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-6 w-full max-w-full overflow-hidden">
+                <div class="text-left flex-1 min-w-0 w-full overflow-hidden">
                     <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Transaction ID</span>
-                    <span class="font-mono text-sm font-bold text-slate-900">{{ $sessionId ?? 'TXN-'.time() }}</span>
+                    <span class="font-mono text-sm font-bold text-slate-900 block truncate" title="{{ $sessionId ?? 'TXN-'.time() }}">{{ $sessionId ?? 'TXN-'.time() }}</span>
                 </div>
-                <div class="w-px h-10 bg-slate-200 hidden sm:block"></div>
-                <div class="text-left">
+                <div class="w-px h-10 bg-slate-200 hidden sm:block flex-shrink-0"></div>
+                <div class="text-left flex-shrink-0">
                     <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status</span>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 text-xs font-bold rounded-full">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 text-xs font-bold rounded-full whitespace-nowrap">
                         <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
                         Confirmed
                     </span>
