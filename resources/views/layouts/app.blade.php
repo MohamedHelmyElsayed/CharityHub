@@ -8,6 +8,10 @@
     <title>@yield('title', 'CharityHub') — Empower Change</title>
     <meta name="description" content="@yield('meta_description', 'Join CharityHub to donate to impactful campaigns, volunteer your time, and track your real-world impact.')">
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('favicon.png') }}">
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
