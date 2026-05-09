@@ -42,12 +42,12 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Donation Type</label>
                             <div class="grid grid-cols-2 gap-3">
-                                <label class="flex items-center justify-center gap-2 p-3 border-2 border-blue-500 bg-blue-50 rounded-xl cursor-pointer transition-all">
-                                    <input type="radio" name="type" value="one_time" checked class="text-blue-600">
+                                <label class="donation-type-label flex items-center justify-center gap-2 p-3 border-2 border-blue-500 bg-blue-50 rounded-xl cursor-pointer transition-all hover:border-blue-400">
+                                    <input type="radio" name="type" value="one_time" checked class="text-blue-600 focus:ring-blue-500">
                                     <span class="font-semibold text-sm">One-Time</span>
                                 </label>
-                                <label class="flex items-center justify-center gap-2 p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 transition-all">
-                                    <input type="radio" name="type" value="recurring" class="text-blue-600">
+                                <label class="donation-type-label flex items-center justify-center gap-2 p-3 border-2 border-gray-200 bg-white rounded-xl cursor-pointer hover:border-blue-400 transition-all">
+                                    <input type="radio" name="type" value="recurring" class="text-blue-600 focus:ring-blue-500">
                                     <span class="font-semibold text-sm">Monthly</span>
                                 </label>
                             </div>
@@ -175,6 +175,19 @@ document.getElementById('donation-form').addEventListener('submit', function() {
     const btn = document.getElementById('donate-submit-btn');
     btn.disabled = true;
     btn.innerHTML = '<svg class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Processing...';
+});
+
+document.querySelectorAll('input[name="type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.donation-type-label').forEach(label => {
+            label.classList.remove('border-blue-500', 'bg-blue-50');
+            label.classList.add('border-gray-200', 'bg-white');
+        });
+        if(this.checked) {
+            this.closest('label').classList.remove('border-gray-200', 'bg-white');
+            this.closest('label').classList.add('border-blue-500', 'bg-blue-50');
+        }
+    });
 });
 </script>
 @endpush

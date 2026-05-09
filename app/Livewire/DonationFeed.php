@@ -4,7 +4,6 @@ namespace App\Livewire;
 
 use App\Models\Donation;
 use Livewire\Component;
-use Livewire\Attributes\Poll;
 
 class DonationFeed extends Component
 {
@@ -17,7 +16,6 @@ class DonationFeed extends Component
         $this->loadDonations();
     }
 
-    #[Poll(5000)]
     public function loadDonations(): void
     {
         $this->donations = Donation::with(['donor'])

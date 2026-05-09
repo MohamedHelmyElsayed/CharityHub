@@ -4,7 +4,6 @@ namespace App\Livewire;
 
 use App\Models\Campaign;
 use Livewire\Component;
-use Livewire\Attributes\Poll;
 
 class CampaignProgress extends Component
 {
@@ -17,7 +16,6 @@ class CampaignProgress extends Component
         $this->campaign = Campaign::find($campaignId);
     }
 
-    #[Poll(5000)]
     public function refreshData(): void
     {
         $this->campaign = Campaign::find($this->campaignId);

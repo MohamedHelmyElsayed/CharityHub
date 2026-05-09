@@ -1,4 +1,4 @@
-<div>
+<div wire:poll.3s="loadDonations">
     @if(count($donations) > 0)
         <ul class="space-y-3">
             @foreach($donations as $donation)
