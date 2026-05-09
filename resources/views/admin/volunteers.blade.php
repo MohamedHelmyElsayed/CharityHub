@@ -71,14 +71,12 @@
                                     </ul>
                                 </div>
                                 @endif
-                                </div>
-
                                 <div class="mt-auto pt-4 border-t border-gray-100 flex gap-3">
                                     <form action="{{ route('custom_admin.volunteers.update-status', $vol->id) }}" method="POST" class="flex-1">
                                         @csrf
                                         @method('PATCH')
                                         <input type="hidden" name="status" value="active">
-                                        <button type="submit" class="w-full bg-green-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-green-700 transition shadow-sm">Approve</button>
+                                        <button type="submit" class="w-full bg-emerald-500 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-emerald-600 transition shadow-sm">Approve</button>
                                     </form>
                                     <form action="{{ route('custom_admin.volunteers.update-status', $vol->id) }}" method="POST" class="flex-1">
                                         @csrf
