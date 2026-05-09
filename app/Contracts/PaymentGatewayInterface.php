@@ -42,4 +42,10 @@ interface PaymentGatewayInterface
      * Returns a normalized event array with type and data.
      */
     public function handleWebhook(string $payload, string $signature): array;
+
+    /**
+     * Verify a payment session directly with the gateway.
+     * Returns a normalized event array if payment is successful.
+     */
+    public function verifyPayment(string $sessionId): ?array;
 }

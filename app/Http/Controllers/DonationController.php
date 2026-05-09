@@ -103,7 +103,18 @@ class DonationController extends Controller
 
     public function success(Request $request)
     {
-        $sessionId = $request->get('session_id');
+        // Stripe uses session_id, Paymob uses id in success redirect
+        $sessionId = $request->get('session_id') ?? $request->get('id');
+
+        if ($sessionId) {
+            \Illuminate\Support\Facades\Log::info('Verifying payment on success page', ['session_id' => $sessionId]);
+            
+            $event = $this->gateway->verifyPayment($sessionId);
+            
+            if ($event && $event['type'] === 'checkout.session.completed') {
+                $this->handleSessionCompleted($event);
+            }
+        }
 
         return view('pages.donate-success', compact('sessionId'));
     }

@@ -123,4 +123,23 @@ class StripeGateway implements PaymentGatewayInterface
             'data' => $event->data->object->toArray(),
         ];
     }
+
+    public function verifyPayment(string $sessionId): ?array
+    {
+        try {
+            $session = Session::retrieve($sessionId);
+
+            if ($session->payment_status === 'paid') {
+                return [
+                    'type' => 'checkout.session.completed',
+                    'event_id' => 'v_' . $session->id,
+                    'data' => $session->toArray(),
+                ];
+            }
+        } catch (\Throwable $e) {
+            Log::error('Stripe payment verification failed', ['session_id' => $sessionId, 'error' => $e->getMessage()]);
+        }
+
+        return null;
+    }
 }

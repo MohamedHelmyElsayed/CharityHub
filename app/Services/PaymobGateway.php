@@ -36,7 +36,7 @@ class PaymobGateway implements PaymentGatewayInterface
         $token = $this->authenticate();
 
         // Step 2: Order Registration Request
-        $orderId = $this->registerOrder($token, $amount, $currency, "Donation to: {$campaign->title}");
+        $orderId = $this->registerOrder($token, $amount, $currency, "Donation to: {$campaign->title}", $idempotencyKey);
 
         // Step 3: Payment Key Request
         $paymentKey = $this->getPaymentKey($token, $amount, $currency, $orderId, $donor, [
@@ -126,11 +126,12 @@ class PaymobGateway implements PaymentGatewayInterface
         return $response['token'];
     }
 
-    private function registerOrder(string $token, float $amount, string $currency, string $name): int
+    private function registerOrder(string $token, float $amount, string $currency, string $name, string $merchantOrderId): int
     {
         $response = Http::post("{$this->baseUrl}/ecommerce/orders", [
             'auth_token' => $token,
             'delivery_needed' => 'false',
+            'merchant_order_id' => $merchantOrderId,
             'amount_cents' => (int) round($amount * 100),
             'currency' => $currency,
             'items' => [
@@ -185,7 +186,7 @@ class PaymobGateway implements PaymentGatewayInterface
         return $response['token'];
     }
 
-    private function verifyHmac(array $data, string $hmacHeader): bool
+    public function verifyHmac(array $data, string $hmacHeader): bool
     {
         $obj = $data['obj'];
         $amount_cents = $obj['amount_cents'] ?? '';
@@ -219,5 +220,40 @@ class PaymobGateway implements PaymentGatewayInterface
 
         // Sometimes Paymob HMAC comparison needs to be lowercased
         return hash_equals($hmacHeader, $calculatedHmac);
+    }
+
+    public function verifyPayment(string $sessionId): ?array
+    {
+        try {
+            $token = $this->authenticate();
+            
+            // In Paymob, the sessionId we returned in createOneTimeCharge was the Order ID.
+            // However, the success redirect might contain the Transaction ID as 'id'.
+            // If the sessionId looks like an order ID, we should try to find its transactions.
+            // For now, assume sessionId is the Transaction ID if it's coming from redirect,
+            // or we try to retrieve the transaction by its ID.
+            
+            $response = Http::withToken($token)->get("{$this->baseUrl}/acceptance/transactions/{$sessionId}");
+
+            if ($response->successful()) {
+                $data = $response->json();
+                if ($data['success'] === true && $data['pending'] === false) {
+                    return [
+                        'type' => 'checkout.session.completed',
+                        'event_id' => 'v_' . $data['id'],
+                        'data' => [
+                            'payment_intent' => (string) $data['id'],
+                            'metadata' => [
+                                'idempotency_key' => $data['order']['merchant_order_id'] ?? null
+                            ]
+                        ],
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error('Paymob payment verification failed', ['id' => $sessionId, 'error' => $e->getMessage()]);
+        }
+
+        return null;
     }
 }

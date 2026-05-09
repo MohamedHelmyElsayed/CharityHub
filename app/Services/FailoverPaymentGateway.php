@@ -77,4 +77,16 @@ class FailoverPaymentGateway implements PaymentGatewayInterface
             return $this->paymob->handleWebhook($payload, $signature);
         }
     }
+
+    public function verifyPayment(string $sessionId): ?array
+    {
+        // Try Stripe first
+        $result = $this->stripe->verifyPayment($sessionId);
+        if ($result) {
+            return $result;
+        }
+
+        // Then try Paymob
+        return $this->paymob->verifyPayment($sessionId);
+    }
 }
