@@ -105,22 +105,6 @@ class DonationController extends Controller
     {
         $sessionId = $request->get('session_id');
 
-        // --- TEMP FOR LOCAL TESTING ---
-        // LOCAL TESTING ONLY: Simulate webhook for localhost
-        if (app()->environment('local')) {
-            $donation = \App\Models\Donation::where('status', 'pending')->latest()->first();
-            if ($donation) {
-                $updated = \App\Models\Donation::where('id', $donation->id)
-                    ->where('status', 'pending')
-                    ->update(['status' => 'completed']);
-                
-                if ($updated) {
-                    event(new \App\Events\DonationReceived($donation->refresh()));
-                }
-            }
-        }
-        // ------------------------------
-
         return view('pages.donate-success', compact('sessionId'));
     }
 

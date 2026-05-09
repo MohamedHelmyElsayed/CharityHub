@@ -11,8 +11,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Bind PaymentGatewayInterface to PaymobGateway
-        $this->app->bind(PaymentGatewayInterface::class, \App\Services\PaymobGateway::class);
+        // Bind PaymentGatewayInterface to FailoverPaymentGateway
+        $this->app->bind(\App\Contracts\PaymentGatewayInterface::class, \App\Services\FailoverPaymentGateway::class);
     }
 
     public function boot(): void

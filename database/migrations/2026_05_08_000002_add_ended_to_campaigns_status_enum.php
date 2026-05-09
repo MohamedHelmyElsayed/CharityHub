@@ -12,7 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE `campaigns` MODIFY `status` ENUM('active', 'completed', 'paused', 'ended') NOT NULL DEFAULT 'active'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE `campaigns` MODIFY `status` ENUM('active', 'completed', 'paused', 'ended') NOT NULL DEFAULT 'active'");
+        }
     }
 
     /**
@@ -21,6 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE `campaigns` MODIFY `status` ENUM('active', 'completed', 'paused') NOT NULL DEFAULT 'active'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE `campaigns` MODIFY `status` ENUM('active', 'completed', 'paused') NOT NULL DEFAULT 'active'");
+        }
     }
 };
