@@ -33,9 +33,10 @@
                             <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Type</label>
                             <select name="type" class="w-full border-gray-300 rounded-lg text-sm border p-2 bg-white">
                                 <option value="">All Types</option>
-                                <option value="donation" {{ request('type') == 'donation' ? 'selected' : '' }}>Donation</option>
-                                <option value="refund" {{ request('type') == 'refund' ? 'selected' : '' }}>Refund</option>
-                                <option value="expense" {{ request('type') == 'expense' ? 'selected' : '' }}>Expense</option>
+                                <option value="payment_success" {{ request('type') == 'payment_success' ? 'selected' : '' }}>Donation</option>
+                                <option value="refund_issued" {{ request('type') == 'refund_issued' ? 'selected' : '' }}>Refund</option>
+                                <option value="payment_failed" {{ request('type') == 'payment_failed' ? 'selected' : '' }}>Failed Payment</option>
+                                <option value="manual_adjustment" {{ request('type') == 'manual_adjustment' ? 'selected' : '' }}>Adjustment</option>
                             </select>
                         </div>
                         <div>
@@ -45,6 +46,14 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">To</label>
                             <input type="date" name="to" value="{{ request('to') }}" class="w-full border-gray-300 rounded-lg text-sm border p-2 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Gateway</label>
+                            <select name="gateway" class="w-full border-gray-300 rounded-lg text-sm border p-2 bg-white">
+                                <option value="">All Gateways</option>
+                                <option value="stripe" {{ request('gateway') == 'stripe' ? 'selected' : '' }}>Stripe</option>
+                                <option value="paymob" {{ request('gateway') == 'paymob' ? 'selected' : '' }}>PayMob</option>
+                            </select>
                         </div>
                         <button type="submit" class="bg-gray-900 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-gray-800 transition">Filter</button>
                     </form>
@@ -58,6 +67,7 @@
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Campaign/Donor</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Gateway</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
                             </tr>
                         </thead>
@@ -65,19 +75,24 @@
                             @forelse($logs as $log)
                             <tr class="hover:bg-gray-50 transition">
                                 <td class="px-6 py-4 whitespace-nowrap text-xs font-mono font-bold text-gray-900">
-                                    {{ $log->reference_id ?? 'N/A' }}
+                                    {{ $log->gateway_transaction_id ?? 'Log-'.$log->id }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-widest border {{ $log->type === 'donation' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100' }}">
-                                        {{ $log->type }}
+                                    <span class="px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-widest border {{ in_array($log->transaction_type, ['payment_success', 'subscription_renewed']) ? 'bg-green-50 text-green-700 border-green-100' : ($log->transaction_type === 'refund_issued' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gray-50 text-gray-700 border-gray-100') }}">
+                                        {{ str_replace('_', ' ', $log->transaction_type) }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-bold text-gray-900">{{ $log->campaign?->title ?? 'General' }}</div>
                                     <div class="text-xs text-gray-500">{{ $log->donor?->name ?? 'External' }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-extrabold {{ $log->type === 'donation' ? 'text-green-600' : 'text-red-600' }}">
-                                    {{ $log->type === 'donation' ? '+' : '-' }}${{ number_format($log->amount, 2) }}
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-extrabold {{ in_array($log->transaction_type, ['payment_success', 'subscription_renewed']) ? 'text-green-600' : 'text-red-600' }}">
+                                    {{ in_array($log->transaction_type, ['payment_success', 'subscription_renewed']) ? '+' : '-' }}${{ number_format($log->amount, 2) }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-xs font-bold {{ $log->gateway === 'stripe' ? 'text-indigo-600' : 'text-orange-600' }}">
+                                        {{ ucfirst($log->gateway ?? 'Manual') }}
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium">
                                     {{ $log->created_at->format('M d, Y H:i') }}

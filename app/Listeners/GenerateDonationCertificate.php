@@ -11,14 +11,16 @@ class GenerateDonationCertificate implements ShouldQueue
 {
     public string $queue = 'certificates';
 
-    public function handle(DonationReceived $event): void
+    public function handle(object $event): void
     {
-        $donation = $event->donation;
+        $donation = match (get_class($event)) {
+            \App\Events\DonationReceived::class => $event->donation,
+            \App\Events\SubscriptionRenewed::class => $event->donation,
+            default => null,
+        };
 
-        // Dispatch certificate generation
-        CertificateGenerationJob::dispatch($donation)->onQueue('certificates');
-
-        // Dispatch ledger entry
-        LedgerEntryJob::dispatch($donation, 'donation', 'success')->onQueue('ledger');
+        if ($donation) {
+            CertificateGenerationJob::dispatch($donation)->onQueue('certificates');
+        }
     }
 }

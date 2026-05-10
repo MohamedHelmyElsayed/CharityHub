@@ -24,14 +24,18 @@ class FailoverPaymentGateway implements PaymentGatewayInterface
     public function createOneTimeCharge(Donor $donor, Campaign $campaign, float $amount, string $currency, string $idempotencyKey): array
     {
         try {
-            return $this->stripe->createOneTimeCharge($donor, $campaign, $amount, $currency, $idempotencyKey);
+            $result = $this->stripe->createOneTimeCharge($donor, $campaign, $amount, $currency, $idempotencyKey);
+            $result['gateway'] = 'stripe';
+            return $result;
         } catch (\Throwable $e) {
             Log::warning('Stripe one-time charge failed, falling back to Paymob', [
                 'donor_email' => $donor->email,
                 'campaign_id' => $campaign->id,
                 'error' => $e->getMessage()
             ]);
-            return $this->paymob->createOneTimeCharge($donor, $campaign, $amount, $currency, $idempotencyKey);
+            $result = $this->paymob->createOneTimeCharge($donor, $campaign, $amount, $currency, $idempotencyKey);
+            $result['gateway'] = 'paymob';
+            return $result;
         }
     }
 
@@ -41,21 +45,25 @@ class FailoverPaymentGateway implements PaymentGatewayInterface
     public function createSubscription(Donor $donor, Campaign $campaign, float $amount, string $currency, string $idempotencyKey): array
     {
         try {
-            return $this->stripe->createSubscription($donor, $campaign, $amount, $currency, $idempotencyKey);
+            $result = $this->stripe->createSubscription($donor, $campaign, $amount, $currency, $idempotencyKey);
+            $result['gateway'] = 'stripe';
+            return $result;
         } catch (\Throwable $e) {
             Log::warning('Stripe subscription failed, falling back to Paymob', [
                 'donor_email' => $donor->email,
                 'campaign_id' => $campaign->id,
                 'error' => $e->getMessage()
             ]);
-            return $this->paymob->createSubscription($donor, $campaign, $amount, $currency, $idempotencyKey);
+            $result = $this->paymob->createSubscription($donor, $campaign, $amount, $currency, $idempotencyKey);
+            $result['gateway'] = 'paymob';
+            return $result;
         }
     }
 
     /**
      * Attempts to cancel subscription on Stripe first, then Paymob.
      */
-    public function cancelSubscription(string $subscriptionId): bool
+    public function cancelSubscription(?string $subscriptionId): bool
     {
         if ($this->stripe->cancelSubscription($subscriptionId)) {
             return true;
@@ -70,11 +78,15 @@ class FailoverPaymentGateway implements PaymentGatewayInterface
     {
         try {
             // Try Stripe verification
-            return $this->stripe->handleWebhook($payload, $signature);
+            $event = $this->stripe->handleWebhook($payload, $signature);
+            $event['gateway'] = 'stripe';
+            return $event;
         } catch (\InvalidArgumentException $e) {
             // If Stripe signature fails, it might be a Paymob webhook
             Log::info('Webhook signature not matching Stripe, trying Paymob...');
-            return $this->paymob->handleWebhook($payload, $signature);
+            $event = $this->paymob->handleWebhook($payload, $signature);
+            $event['gateway'] = 'paymob';
+            return $event;
         }
     }
 
@@ -83,10 +95,41 @@ class FailoverPaymentGateway implements PaymentGatewayInterface
         // Try Stripe first
         $result = $this->stripe->verifyPayment($sessionId);
         if ($result) {
+            $result['gateway'] = 'stripe';
             return $result;
         }
 
         // Then try Paymob
-        return $this->paymob->verifyPayment($sessionId);
+        $result = $this->paymob->verifyPayment($sessionId);
+        if ($result) {
+            $result['gateway'] = 'paymob';
+            return $result;
+        }
+        
+        return null;
+    }
+
+    public function refundCharge(string $paymentIntentId, float $amount, ?string $reason = null): array
+    {
+        // Try Stripe first
+        $result = $this->stripe->refundCharge($paymentIntentId, $amount, $reason);
+        if ($result['status'] === 'success') {
+            return $result;
+        }
+
+        // Then try Paymob
+        return $this->paymob->refundCharge($paymentIntentId, $amount, $reason);
+    }
+
+    public function getSubscription(?string $subscriptionId): ?array
+    {
+        // Try Stripe first
+        $result = $this->stripe->getSubscription($subscriptionId);
+        if ($result) {
+            return $result;
+        }
+
+        // Then try Paymob
+        return $this->paymob->getSubscription($subscriptionId);
     }
 }

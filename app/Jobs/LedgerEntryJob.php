@@ -35,8 +35,8 @@ class LedgerEntryJob implements ShouldQueue
             'donation_id' => $donation->id,
             'amount' => $donation->amount,
             'currency' => $donation->currency ?? 'USD',
-            'type' => $this->type,
-            'stripe_event_id' => $this->stripeEventId,
+            'transaction_type' => $this->type,
+            'gateway_transaction_id' => $this->stripeEventId,
             'status' => $this->status,
             'metadata' => array_merge([
                 'donation_type' => $donation->type,

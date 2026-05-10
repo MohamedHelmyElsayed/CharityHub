@@ -41,6 +41,11 @@ class Donor extends Model
         return $this->hasMany(Donation::class);
     }
 
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
     public function certificates()
     {
         return $this->hasMany(Certificate::class);

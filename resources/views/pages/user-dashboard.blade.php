@@ -3,7 +3,7 @@
 @section('title', 'My Dashboard')
 
 @section('content')
-<div class="min-h-screen bg-slate-50/50 py-12">
+<div class="min-h-screen bg-slate-50/50 py-12" x-data="{ showCancelModal: false, activeSubscriptionId: null }">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {{-- Header Section --}}
@@ -106,6 +106,68 @@
                         </table>
                     </div>
                 </div>
+
+                {{-- Recurring Subscriptions --}}
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-slate-900">Recurring Plans</h2>
+                        <span class="text-sm font-medium text-slate-400">{{ collect($subscriptions ?? [])->count() }} active plans</span>
+                    </div>
+                    <div class="p-8 space-y-6">
+                        @forelse($subscriptions ?? [] as $sub)
+                        <div class="border border-slate-100 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-lg">{{ $sub->campaign ? $sub->campaign->title : 'General Donation' }}</h3>
+                                    <p class="text-sm font-bold text-slate-500 mt-1">EGP {{ number_format($sub->amount, 2) }} / month</p>
+                                    @if($sub->isActive())
+                                        <p class="text-xs text-emerald-600 font-bold mt-1 uppercase tracking-wider">Active • Next Billing: {{ $sub->next_billing_date ? $sub->next_billing_date->format('M d, Y') : 'N/A' }}</p>
+                                    @else
+                                        <p class="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">Cancelled</p>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 self-end md:self-auto">
+                                @if($sub->isActive())
+                                    <button @click="showCancelModal = true; activeSubscriptionId = {{ $sub->id }}" class="px-5 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 font-bold text-sm rounded-xl transition-colors border border-rose-100">
+                                        Cancel Plan
+                                    </button>
+                                @else
+                                    <form action="{{ route('donate.checkout') }}" method="POST" class="inline">
+                                        @csrf
+                                        <input type="hidden" name="amount" value="{{ $sub->amount }}">
+                                        @if($sub->campaign_id)
+                                            <input type="hidden" name="campaign_id" value="{{ $sub->campaign_id }}">
+                                        @else
+                                            <input type="hidden" name="campaign_id" value="1">
+                                        @endif
+                                        <input type="hidden" name="type" value="recurring">
+                                        <input type="hidden" name="name" value="{{ auth()->user()->name }}">
+                                        <input type="hidden" name="email" value="{{ auth()->user()->email }}">
+                                        <input type="hidden" name="gdpr_consent" value="1">
+                                        <input type="hidden" name="anonymous" value="0">
+                                        <input type="hidden" name="idempotency_key" value="{{ Str::uuid() }}">
+                                        <button type="submit" class="px-5 py-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 font-bold text-sm rounded-xl transition-colors border border-emerald-100">
+                                            Renew Plan
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        </div>
+                        @empty
+                        <div class="text-center py-8">
+                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mx-auto mb-4">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <p class="text-slate-500 font-bold">No recurring plans active.</p>
+                            <a href="{{ route('donate') }}" class="text-indigo-600 font-bold text-sm mt-2 inline-block hover:underline">Start a monthly plan</a>
+                        </div>
+                        @endforelse
+                    </div>
+                </div>
             </div>
 
             {{-- Certificates --}}
@@ -146,6 +208,64 @@
                         </p>
                     </div>
                     @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancellation Modal (Alpine.js) -->
+    <div 
+        x-show="showCancelModal" 
+        class="fixed inset-0 z-[100] overflow-y-auto" 
+        style="display: none;"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+    >
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="showCancelModal = false">
+                <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+            </div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div 
+                class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-100"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+                <div class="bg-white p-8">
+                    <div class="text-center">
+                        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-rose-50 mb-6">
+                            <svg class="h-8 w-8 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900">Cancel Recurring Plan?</h3>
+                        <div class="mt-4">
+                            <p class="text-slate-500 font-medium leading-relaxed text-sm">
+                                By cancelling this recurring donation, you are stopping future support for this campaign. Your previous donations will remain processed.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-50/80 px-8 py-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-slate-100">
+                    <form :action="'/donor/subscriptions/' + activeSubscriptionId + '/cancel'" method="POST" class="w-full sm:w-auto">
+                        @csrf
+                        <button type="submit" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-3 bg-rose-600 text-sm font-bold text-white hover:bg-rose-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500">
+                            Yes, Cancel
+                        </button>
+                    </form>
+                    <button @click="showCancelModal = false" type="button" class="w-full sm:w-auto inline-flex justify-center rounded-xl border border-slate-200 px-6 py-3 bg-white text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500">
+                        Keep Supporting
+                    </button>
                 </div>
             </div>
         </div>

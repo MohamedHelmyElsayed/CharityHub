@@ -4,13 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Contracts\PaymentGatewayInterface;
 use App\Events\DonationReceived;
+use App\Events\PaymentFailed;
+use App\Events\RefundIssued;
+use App\Events\WebhookReceived;
+use App\Events\WebhookFailed;
 use App\Jobs\LedgerEntryJob;
 use App\Models\Campaign;
 use App\Models\Donation;
 use App\Models\Donor;
 use App\Models\Subscription;
+use App\Models\PaymentWebhook;
+use App\Models\Refund;
+use App\Events\SubscriptionCreated;
+use App\Events\SubscriptionCancelled;
+use App\Events\SubscriptionRenewed;
+use App\Events\RenewalFailed;
+use App\Notifications\SubscriptionRenewedNotification;
+use App\Notifications\PaymentFailedNotification;
 use App\Services\CampaignService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DonationController extends Controller
@@ -50,11 +63,7 @@ class DonationController extends Controller
             return back()->with('error', 'This campaign has reached its goal and is no longer accepting donations.');
         }
 
-        // Idempotency check
-        $existing = Donation::where('idempotency_key', $validated['idempotency_key'])->first();
-        if ($existing) {
-            return response()->json(['error' => 'Duplicate request detected.'], 409);
-        }
+        // Idempotency handled by middleware
 
         // Find or create donor
         $donor = Donor::firstOrCreate(
@@ -89,6 +98,7 @@ class DonationController extends Controller
                 'currency' => $currency,
                 'type' => $validated['type'],
                 'status' => 'pending',
+                'gateway' => $result['gateway'] ?? null,
                 'idempotency_key' => $idempotencyKey,
                 'anonymous' => $validated['anonymous'] ?? false,
                 'message' => $validated['message'] ?? null,
@@ -138,20 +148,47 @@ class DonationController extends Controller
 
         try {
             $event = $this->gateway->handleWebhook($payload, $signature);
+            event(new WebhookReceived(get_class($this->gateway), $event));
         } catch (\InvalidArgumentException $e) {
             \Illuminate\Support\Facades\Log::error('Webhook Signature Verification Failed', ['error' => $e->getMessage()]);
+            event(new WebhookFailed(get_class($this->gateway), $e->getMessage(), ['payload' => $payload]));
             return response()->json(['error' => $e->getMessage()], 400);
         }
 
-        \Illuminate\Support\Facades\Log::info('Webhook Event Normalized', ['type' => $event['type']]);
+        // Idempotency check
+        $webhook = PaymentWebhook::firstOrCreate(
+            ['gateway_event_id' => $event['event_id']],
+            [
+                'gateway' => get_class($this->gateway),
+                'event_type' => $event['type'],
+                'payload' => $event['data'],
+            ]
+        );
 
-        match ($event['type']) {
-            'checkout.session.completed' => $this->handleSessionCompleted($event),
-            'invoice.paid' => $this->handleInvoicePaid($event),
-            'invoice.payment_failed' => $this->handlePaymentFailed($event),
-            'charge.refunded' => $this->handleRefund($event),
-            default => null,
-        };
+        if ($webhook->processed_at) {
+            return response()->json(['status' => 'already_processed']);
+        }
+
+        try {
+            match ($event['type']) {
+                'checkout.session.completed' => $this->handleSessionCompleted($event),
+                'invoice.paid', 'invoice.payment_succeeded' => $this->handleInvoicePaid($event),
+                'invoice.payment_failed' => $this->handlePaymentFailed($event),
+                'charge.refunded' => $this->handleRefund($event),
+                'customer.subscription.deleted' => $this->handleSubscriptionDeleted($event),
+                'customer.subscription.updated' => $this->handleSubscriptionUpdated($event),
+                default => null,
+            };
+
+            $webhook->update(['processed_at' => now()]);
+        } catch (\Throwable $e) {
+            $webhook->update(['error' => $e->getMessage()]);
+            \Illuminate\Support\Facades\Log::error('Webhook processing failed', [
+                'event_id' => $event['event_id'],
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
 
         return response()->json(['status' => 'ok']);
     }
@@ -178,6 +215,39 @@ class DonationController extends Controller
         
         if ($updated) {
             $donation = Donation::where('idempotency_key', $idempotencyKey)->first();
+
+            // If it's a recurring donation, create or update the Subscription record
+            if ($donation->type === 'recurring') {
+                $subscription = Subscription::updateOrCreate(
+                    ['gateway_subscription_id' => $data['subscription'] ?? null],
+                    [
+                        'user_id' => $donation->user_id,
+                        'donor_id' => $donation->donor_id,
+                        'campaign_id' => $donation->campaign_id,
+                        'gateway' => $event['gateway'] ?? 'stripe',
+                        'gateway_customer_id' => $data['customer'] ?? null,
+                        'amount' => $donation->amount,
+                        'currency' => $donation->currency,
+                        'status' => 'active',
+                        'next_billing_date' => now()->addMonth(), // Default for monthly
+                    ]
+                );
+
+                $donation->update([
+                    'subscription_id' => $subscription->id,
+                    'is_recurring' => true,
+                    'gateway' => $event['gateway'] ?? 'stripe',
+                    'gateway_transaction_id' => $data['payment_intent'] ?? null,
+                ]);
+
+                event(new SubscriptionCreated($subscription));
+            } else {
+                $donation->update([
+                    'gateway' => $event['gateway'] ?? 'stripe',
+                    'gateway_transaction_id' => $data['payment_intent'] ?? null,
+                ]);
+            }
+
             // Fire event → handles progress update, certificate generation, and ledger entry
             \Illuminate\Support\Facades\Log::info('Firing DonationReceived Event from Webhook', ['donation_id' => $donation->id]);
             event(new DonationReceived($donation));
@@ -192,34 +262,69 @@ class DonationController extends Controller
         $subscriptionId = $data['subscription'] ?? null;
         if (!$subscriptionId) return;
 
-        $subscription = Subscription::where('stripe_id', $subscriptionId)->first();
+        $subscription = Subscription::where('gateway_subscription_id', $subscriptionId)->first();
         if (!$subscription) return;
 
         // Create a donation record for this renewal
         $donation = Donation::create([
+            'user_id' => $subscription->user_id,
             'donor_id' => $subscription->donor_id,
             'campaign_id' => $subscription->campaign_id,
+            'subscription_id' => $subscription->id,
             'amount' => $subscription->amount,
             'currency' => $subscription->currency ?? 'USD',
             'type' => 'recurring',
+            'is_recurring' => true,
             'status' => 'completed',
-            'idempotency_key' => Str::uuid(),
+            'gateway' => 'stripe',
+            'gateway_transaction_id' => $data['payment_intent'] ?? null,
+            'idempotency_key' => 'renew_' . ($data['id'] ?? Str::random(10)),
             'ip_address' => null,
         ]);
 
+        $subscription->update([
+            'status' => 'active',
+            'next_billing_date' => isset($data['lines']['data'][0]['period']['end']) 
+                ? \Carbon\Carbon::createFromTimestamp($data['lines']['data'][0]['period']['end']) 
+                : now()->addMonth(),
+        ]);
+
         event(new DonationReceived($donation));
+        event(new SubscriptionRenewed($subscription, $donation));
+
+        // Notify Donor
+        if ($subscription->user) {
+            $subscription->user->notify(new SubscriptionRenewedNotification($subscription, $donation));
+        }
     }
 
     private function handlePaymentFailed(array $event): void
     {
         $data = $event['data'];
         $subscriptionId = $data['subscription'] ?? null;
+        if (!$subscriptionId) return;
 
-        $donation = Donation::where('idempotency_key', $data['metadata']['idempotency_key'] ?? '')->first();
-        if ($donation) {
-            $donation->update(['status' => 'failed']);
-            LedgerEntryJob::dispatch($donation, 'donation', 'failed', $event['event_id'])->onQueue('ledger');
-        }
+        $subscription = Subscription::where('gateway_subscription_id', $subscriptionId)->first();
+        if (!$subscription) return;
+
+        $subscription->update(['status' => 'past_due']);
+
+        // Create a failed donation record for audit
+        $donation = Donation::create([
+            'donor_id' => $subscription->donor_id,
+            'campaign_id' => $subscription->campaign_id,
+            'subscription_id' => $subscription->id,
+            'amount' => $subscription->amount,
+            'currency' => $subscription->currency,
+            'type' => 'recurring',
+            'is_recurring' => true,
+            'status' => 'failed',
+            'idempotency_key' => 'fail_' . $event['event_id'],
+            'gateway' => 'stripe',
+        ]);
+
+        event(new RenewalFailed($subscription, $data));
+        event(new PaymentFailed($donation, $data));
     }
 
     private function handleRefund(array $event): void
@@ -241,6 +346,42 @@ class DonationController extends Controller
             ->where('id', $donation->campaign_id)
             ->decrement('current_amount', $refundAmount);
 
-        LedgerEntryJob::dispatch($donation, 'refund', 'success', $event['event_id'])->onQueue('ledger');
+        event(new RefundIssued($donation, $event));
+
+        // Create a Refund record
+        Refund::create([
+            'donation_id' => $donation->id,
+            'amount' => $refundAmount,
+            'currency' => $donation->currency,
+            'reason' => $data['reason'] ?? 'Stripe Refund',
+            'gateway_refund_id' => $data['id'] ?? null,
+            'status' => 'completed',
+        ]);
+    }
+
+    private function handleSubscriptionDeleted(array $event): void
+    {
+        $data = $event['data'];
+        $subscription = Subscription::where('gateway_subscription_id', $data['id'])->first();
+        if ($subscription) {
+            $subscription->update([
+                'status' => 'canceled',
+                'cancelled_at' => now(),
+                'ends_at' => isset($data['ended_at']) ? \Carbon\Carbon::createFromTimestamp($data['ended_at']) : now(),
+            ]);
+            event(new SubscriptionCancelled($subscription));
+        }
+    }
+
+    private function handleSubscriptionUpdated(array $event): void
+    {
+        $data = $event['data'];
+        $subscription = Subscription::where('gateway_subscription_id', $data['id'])->first();
+        if ($subscription) {
+            $subscription->update([
+                'status' => $data['status'],
+                'next_billing_date' => isset($data['current_period_end']) ? \Carbon\Carbon::createFromTimestamp($data['current_period_end']) : $subscription->next_billing_date,
+            ]);
+        }
     }
 }

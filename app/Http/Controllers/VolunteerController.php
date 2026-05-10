@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\VolunteerSchedule;
+use App\Models\AttendanceLog;
+use App\Models\HourLog;
+use App\Models\VolunteerEvent;
+use App\Models\VolunteerSlotRequest;
+use App\Models\VolunteerShift;
 use App\Models\Volunteer;
 use Illuminate\Http\Request;
 
@@ -10,22 +14,24 @@ class VolunteerController extends Controller
 {
     public function index()
     {
-        $schedules = VolunteerSchedule::with('campaign')
+        // New event-based data
+        $events = VolunteerEvent::with('shifts')->upcoming()->latest('start_date')->take(9)->get();
+
+        // Legacy schedule-based data (still used by volunteer.blade.php form dropdown)
+        $schedules = \App\Models\VolunteerSchedule::with('campaign')
             ->where('status', 'scheduled')
             ->where('event_date', '>=', today())
             ->orderBy('event_date')
             ->get();
 
-        $campaigns = \App\Models\Campaign::active()->whereHas('volunteerSchedules', function($q) {
-            $q->where('status', 'scheduled')
-              ->where('event_date', '>=', today());
-        })->get();
+        $campaigns = \App\Models\Campaign::active()
+            ->whereHas('volunteerSchedules', function ($q) {
+                $q->where('status', 'scheduled')->where('event_date', '>=', today());
+            })->get();
 
-        $myVolunteer = auth()->check()
-            ? auth()->user()->volunteer
-            : null;
+        $myVolunteer = auth()->check() ? auth()->user()->volunteer : null;
 
-        return view('pages.volunteer', compact('schedules', 'campaigns', 'myVolunteer'));
+        return view('pages.volunteer', compact('events', 'schedules', 'campaigns', 'myVolunteer'));
     }
 
     public function profile()
@@ -34,133 +40,109 @@ class VolunteerController extends Controller
         if (!$myVolunteer) {
             return redirect()->route('volunteer.index')->with('info', 'Please register as a volunteer first.');
         }
-
         return view('pages.volunteer-profile-edit', compact('myVolunteer'));
     }
 
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'skills' => 'nullable|string|max:500',
-            'bio' => 'nullable|string|max:1000',
-            'schedule_id' => 'nullable|exists:volunteer_schedules,id',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|max:255',
+            'phone'    => 'nullable|string|max:20',
+            'skills'   => 'nullable|string|max:500',
+            'bio'      => 'nullable|string|max:1000',
         ]);
 
-        // Process comma-separated skills string into array
-        $skillsArray = $request->filled('skills') 
+        $skillsArray = $request->filled('skills')
             ? array_map('trim', explode(',', $validated['skills']))
             : [];
 
-        // Find or create volunteer profile
-        $volunteer = Volunteer::updateOrCreate(
-            ['email' => $validated['email']],
+        Volunteer::updateOrCreate(
+            ['user_id' => auth()->id()],
             [
-                'user_id' => auth()->id(),
-                'name' => $validated['name'],
-                'phone' => $validated['phone'] ?? null,
+                'name'   => $validated['name'],
+                'email'  => $validated['email'],
+                'phone'  => $validated['phone'] ?? null,
                 'skills' => $skillsArray,
-                'bio' => $validated['bio'] ?? null,
+                'bio'    => $validated['bio'] ?? null,
                 'status' => 'pending',
             ]
         );
 
-        $message = 'Volunteer profile updated successfully!';
-
-        // Register for a specific schedule if requested
-        if (!empty($validated['schedule_id'])) {
-            $schedule = VolunteerSchedule::findOrFail($validated['schedule_id']);
-
-            // Conflict detection
-            if ($volunteer->hasConflict($schedule)) {
-                return back()->withErrors(['error' => 'Scheduling conflict: You are already registered for another event during this time.']);
-            }
-
-            if ($schedule->isAtCapacity()) {
-                return back()->withErrors(['error' => 'This event is at full capacity.']);
-            }
-
-            // Register
-            $volunteer->schedules()->syncWithoutDetaching([
-                $schedule->id => ['status' => 'registered']
-            ]);
-
-            $message = 'Successfully registered for ' . $schedule->event_name;
-        }
-
-        if ($request->wantsJson()) {
-            return response()->json(['message' => $message]);
-        }
-
-        return redirect()->route('volunteer.dashboard')->with('success', $message);
+        return redirect()->route('volunteer.dashboard')->with('success', 'Volunteer application submitted! An admin will review it shortly.');
     }
 
     public function dashboard()
     {
-        $user = auth()->user();
+        $user      = auth()->user();
         $volunteer = $user->volunteer;
+
         if (!$volunteer) {
             return redirect()->route('volunteer.index')->with('info', 'Please register as a volunteer first.');
         }
 
-        // Volunteer Schedules
+        // ── Stats ──────────────────────────────────────────────────────────────
+        $totalApprovedHours = $volunteer->total_approved_hours;
+        $pendingHours       = HourLog::where('volunteer_id', $volunteer->id)->where('status', 'pending_review')->sum('calculated_hours');
+        $completedShifts    = AttendanceLog::where('volunteer_id', $volunteer->id)->whereIn('status', ['checked_out', 'verified'])->count();
+
+        // ── Upcoming Shifts (safe join-based ordering) ─────────────────────────
+        $upcomingRequests = VolunteerSlotRequest::with(['shift.event'])
+            ->where('volunteer_slot_requests.volunteer_id', $volunteer->id)
+            ->where('volunteer_slot_requests.status', 'approved')
+            ->whereNotNull('volunteer_slot_requests.shift_id')
+            ->join('volunteer_shifts', 'volunteer_slot_requests.shift_id', '=', 'volunteer_shifts.id')
+            ->where('volunteer_shifts.shift_date', '>=', today())
+            ->orderBy('volunteer_shifts.shift_date')
+            ->orderBy('volunteer_shifts.start_time')
+            ->select('volunteer_slot_requests.*')
+            ->limit(5)->get();
+
+        // ── Available Events ───────────────────────────────────────────────────
+        $availableEvents = VolunteerEvent::with('shifts')->upcoming()->take(6)->get();
+
+        // ── Slot Requests History (all, including legacy without shift_id) ──────
+        $slotRequests = VolunteerSlotRequest::with(['shift.event'])
+            ->where('volunteer_id', $volunteer->id)
+            ->latest()->limit(10)->get();
+
+        // ── Attendance History ─────────────────────────────────────────────────
+        $attendanceHistory = AttendanceLog::with(['shift.event'])
+            ->where('volunteer_id', $volunteer->id)
+            ->latest('check_in')->limit(10)->get();
+
+        // ── Hour Logs ──────────────────────────────────────────────────────────
+        $hourLogs = HourLog::with('attendanceLog.shift.event')
+            ->where('volunteer_id', $volunteer->id)
+            ->latest()->limit(10)->get();
+
+        // ── Legacy compatibility: old schedules ────────────────────────────────
         $upcomingSchedules = $volunteer->schedules()
             ->where('event_date', '>=', today())
             ->where('volunteer_schedules.status', 'scheduled')
-            ->orderBy('event_date')
-            ->get();
+            ->orderBy('event_date')->limit(5)->get();
 
         $pastSchedules = $volunteer->schedules()
             ->where('event_date', '<', today())
-            ->orderByDesc('event_date')
-            ->get();
+            ->orderByDesc('event_date')->limit(5)->get();
 
-        // Donation Stats (if they are also a donor)
+        // ── Donations (if also a donor) ────────────────────────────────────────
         $donationStats = [
-            'total_donated' => \App\Models\Donation::where('user_id', $user->id)->completed()->sum('amount'),
-            'donation_count' => \App\Models\Donation::where('user_id', $user->id)->completed()->count(),
+            'total_donated'      => \App\Models\Donation::where('user_id', $user->id)->completed()->sum('amount'),
+            'donation_count'     => \App\Models\Donation::where('user_id', $user->id)->completed()->count(),
             'certificates_count' => \App\Models\Donation::where('user_id', $user->id)->whereNotNull('certificate_uuid')->count(),
-            'impact_points' => (\App\Models\Donation::where('user_id', $user->id)->completed()->sum('amount') * 10) + ($volunteer->total_hours * 50), // 50 points per hour
         ];
-
         $recentDonations = \App\Models\Donation::with('campaign')
-            ->where('user_id', $user->id)
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
+            ->where('user_id', $user->id)->latest()->limit(5)->get();
 
-        $certificates = \App\Models\Donation::where('user_id', $user->id)
-            ->whereNotNull('certificate_uuid')
-            ->orderByDesc('created_at')
-            ->get();
-
-        // Hour Logs (for approval status)
-        $hourLogs = $volunteer->hours()
-            ->with('schedule')
-            ->orderByDesc('created_at')
-            ->get();
-
-        // Slot Requests
-        $slotRequests = \App\Models\VolunteerSlotRequest::with('campaign')
-            ->where('volunteer_id', $volunteer->id)
-            ->orderByDesc('requested_date')
-            ->get();
-            
-        // Campaigns for slot request form
         $campaigns = \App\Models\Campaign::active()->get();
 
         return view('pages.volunteer-dashboard', compact(
-            'volunteer', 
-            'upcomingSchedules', 
-            'pastSchedules', 
-            'donationStats', 
-            'recentDonations', 
-            'certificates',
-            'hourLogs',
-            'slotRequests',
-            'campaigns'
+            'volunteer', 'totalApprovedHours', 'pendingHours', 'completedShifts',
+            'upcomingRequests', 'availableEvents', 'slotRequests',
+            'attendanceHistory', 'hourLogs',
+            'upcomingSchedules', 'pastSchedules',
+            'donationStats', 'recentDonations', 'campaigns'
         ));
     }
 
@@ -168,7 +150,7 @@ class VolunteerController extends Controller
     {
         $validated = $request->validate([
             'schedule_id' => 'required|exists:volunteer_schedule_user,volunteer_schedule_id',
-            'hours' => 'required|numeric|min:0.5|max:24',
+            'hours'       => 'required|numeric|min:0.5|max:24',
         ]);
 
         $volunteer = auth()->user()->volunteer;
@@ -178,22 +160,21 @@ class VolunteerController extends Controller
 
         $volunteer->schedules()->updateExistingPivot($validated['schedule_id'], [
             'hours_worked' => $validated['hours'],
-            'status' => 'attended',
+            'status'       => 'attended',
         ]);
 
-        // Create dedicated hour log for admin approval
         \App\Models\VolunteerHour::create([
-            'volunteer_id' => $volunteer->id,
-            'volunteer_schedule_id' => $validated['schedule_id'],
-            'date' => now()->toDateString(),
-            'hours' => $validated['hours'],
-            'status' => 'pending',
+            'volunteer_id'           => $volunteer->id,
+            'volunteer_schedule_id'  => $validated['schedule_id'],
+            'date'                   => now()->toDateString(),
+            'hours'                  => $validated['hours'],
+            'status'                 => 'pending',
         ]);
 
-        return back()->with('success', 'Hours logged successfully and pending approval.');
+        return back()->with('success', 'Hours logged and pending admin approval.');
     }
 
-    public function showSchedule(VolunteerSchedule $schedule)
+    public function showSchedule(\App\Models\VolunteerSchedule $schedule)
     {
         return view('pages.volunteer-schedule-details', compact('schedule'));
     }

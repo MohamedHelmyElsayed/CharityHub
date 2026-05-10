@@ -65,9 +65,11 @@ class PaymobGateway implements PaymentGatewayInterface
         return $this->createOneTimeCharge($donor, $campaign, $amount, $currency, $idempotencyKey);
     }
 
-    public function cancelSubscription(string $subscriptionId): bool
+    public function cancelSubscription(?string $subscriptionId): bool
     {
-        // Cancel subscription logic for Paymob
+        // Paymob recurring is often managed via a different dashboard or requires 
+        // manual intervention for tokenized cards. We log it for admin awareness.
+        Log::info('Manual PayMob subscription cancellation requested', ['subscription_id' => $subscriptionId]);
         return true;
     }
 
@@ -254,6 +256,46 @@ class PaymobGateway implements PaymentGatewayInterface
             Log::error('Paymob payment verification failed', ['id' => $sessionId, 'error' => $e->getMessage()]);
         }
 
+        return null;
+    }
+
+    public function refundCharge(string $paymentIntentId, float $amount, ?string $reason = null): array
+    {
+        try {
+            $token = $this->authenticate();
+            
+            $response = Http::post("{$this->baseUrl}/acceptance/void_refund/refund", [
+                'auth_token' => $token,
+                'transaction_id' => $paymentIntentId,
+                'amount_cents' => (int) round($amount * 100),
+            ]);
+
+            $data = $response->json();
+
+            // Paymob often returns 'success' => true or simply an object if successful
+            if ($response->successful() && (!isset($data['success']) || $data['success'] === true) && isset($data['id'])) {
+                return [
+                    'status' => 'success',
+                    'gateway_refund_id' => (string) $data['id'],
+                    'data' => $data,
+                ];
+            }
+
+            return [
+                'status' => 'error',
+                'message' => 'Paymob refund failed: ' . ($data['detail'] ?? 'Unknown error from gateway'),
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Paymob refund exception', ['error' => $e->getMessage()]);
+            return [
+                'status' => 'error',
+                'message' => 'Paymob refund exception: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    public function getSubscription(?string $subscriptionId): ?array
+    {
         return null;
     }
 }

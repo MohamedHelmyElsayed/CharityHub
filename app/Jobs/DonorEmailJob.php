@@ -41,5 +41,13 @@ class DonorEmailJob implements ShouldQueue
                 'emailed_at' => now(),
             ]);
         }
+
+        \App\Models\FinancialLog::create([
+            'donor_id' => $donation->donor_id,
+            'donation_id' => $donation->id,
+            'transaction_type' => 'email_sent',
+            'status' => 'success',
+            'metadata' => ['email' => $email],
+        ]);
     }
 }

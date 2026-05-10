@@ -74,10 +74,18 @@ class CertificateGenerationJob implements ShouldQueue
             ]
         );
 
-        // Update donation
         $donation->update([
             'certificate_path' => $filename,
             'certificate_generated_at' => now(),
+        ]);
+
+        // Log in financial audit
+        \App\Models\FinancialLog::create([
+            'donor_id' => $donation->donor_id,
+            'donation_id' => $donation->id,
+            'transaction_type' => 'certificate_generated',
+            'status' => 'success',
+            'metadata' => ['certificate_uuid' => $donation->certificate_uuid],
         ]);
 
         // Dispatch email job

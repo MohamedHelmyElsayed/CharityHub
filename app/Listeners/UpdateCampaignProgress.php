@@ -16,13 +16,17 @@ class UpdateCampaignProgress
         $this->campaignService = $campaignService;
     }
 
-    public function handle(DonationReceived $event): void
+    public function handle(object $event): void
     {
-        $donation = $event->donation;
-        $campaign = $donation->campaign;
+        $donation = match (get_class($event)) {
+            \App\Events\DonationReceived::class => $event->donation,
+            \App\Events\SubscriptionRenewed::class => $event->donation,
+            \App\Events\RefundIssued::class => $event->donation,
+            default => null,
+        };
 
-        if ($campaign) {
-            $this->campaignService->updateProgress($campaign, $donation->amount);
+        if ($donation && $donation->campaign) {
+            $this->campaignService->updateProgress($donation->campaign, $donation->amount);
         }
     }
 }

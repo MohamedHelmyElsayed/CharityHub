@@ -35,7 +35,7 @@ interface PaymentGatewayInterface
     /**
      * Cancel an active subscription.
      */
-    public function cancelSubscription(string $subscriptionId): bool;
+    public function cancelSubscription(?string $subscriptionId): bool;
 
     /**
      * Handle incoming webhook payload from the payment gateway.
@@ -48,4 +48,14 @@ interface PaymentGatewayInterface
      * Returns a normalized event array if payment is successful.
      */
     public function verifyPayment(string $sessionId): ?array;
+
+    /**
+     * Issue a full or partial refund for a charge.
+     */
+    public function refundCharge(string $paymentIntentId, float $amount, ?string $reason = null): array;
+
+    /**
+     * Get the current status and details of a subscription.
+     */
+    public function getSubscription(?string $subscriptionId): ?array;
 }

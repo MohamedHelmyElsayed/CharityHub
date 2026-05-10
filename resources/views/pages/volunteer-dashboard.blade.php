@@ -1,385 +1,340 @@
 @extends('layouts.app')
-
 @section('title', 'Volunteer Dashboard')
 
 @section('content')
-<div class="min-h-screen bg-slate-50 py-12 lg:py-20 relative overflow-hidden">
-    {{-- Background decorations --}}
-    <div class="absolute inset-0 pointer-events-none">
-        <div class="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-100/50 blur-3xl opacity-40 rounded-full -translate-y-1/2 -translate-x-1/4"></div>
-    </div>
+<div class="min-h-screen" style="background: linear-gradient(135deg, #f8fafc 0%, #ede9fe 40%, #eff6ff 100%)">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div class="flex flex-col lg:flex-row gap-10">
-            {{-- Profile Sidebar --}}
-            <div class="lg:w-1/3 space-y-8">
-                <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8 lg:p-10 text-center relative overflow-hidden group">
-                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-                    
-                    <div class="relative mb-6">
-                        <div class="w-32 h-32 bg-slate-100 rounded-full mx-auto flex items-center justify-center text-4xl font-extrabold text-blue-600 border-4 border-white shadow-xl relative z-10 group-hover:scale-105 transition-transform duration-500">
-                            {{ substr($volunteer->name, 0, 1) }}
-                        </div>
-                        <div class="absolute inset-0 bg-blue-500 blur-2xl opacity-10 rounded-full scale-125 group-hover:opacity-20 transition-opacity"></div>
-                    </div>
-
-                    <h1 class="text-2xl font-extrabold text-slate-900 mb-2">{{ $volunteer->name }}</h1>
-                    <p class="text-slate-500 font-medium mb-6">{{ $volunteer->email }}</p>
-
-                    <div class="flex justify-center gap-3 mb-8">
-                        @foreach($volunteer->skills as $skill)
-                        <span class="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold uppercase tracking-wider rounded-full border border-blue-100">
-                            {{ $skill }}
-                        </span>
-                        @endforeach
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 pt-8 border-t border-slate-50">
-                        <div>
-                            <span class="block text-2xl font-extrabold text-slate-900 tracking-tight">{{ $volunteer->total_hours }}</span>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hours Logged</span>
-                        </div>
-                        <div>
-                            <span class="block text-2xl font-extrabold text-slate-900 tracking-tight">{{ $pastSchedules->count() }}</span>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Events Done</span>
-                        </div>
-                    </div>
-
-                    {{-- Donation Stats --}}
-                    @if($donationStats['donation_count'] > 0)
-                    <div class="mt-8 pt-8 border-t border-slate-50">
-                        <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Donation Impact</h4>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <span class="block text-xl font-extrabold text-slate-900 tracking-tight">${{ number_format($donationStats['total_donated']) }}</span>
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Donated</span>
-                            </div>
-                            <div>
-                                <span class="block text-xl font-extrabold text-blue-600 tracking-tight">{{ number_format($donationStats['impact_points']) }}</span>
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Impact Points</span>
-                            </div>
-                        </div>
-                    </div>
+    {{-- ── Header ────────────────────────────────────────────────────────── --}}
+    <div class="flex items-start justify-between mb-8">
+        <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg text-white font-black text-2xl"
+                 style="background: linear-gradient(135deg, #7c3aed, #2563eb)">
+                {{ strtoupper(substr($volunteer->name ?? auth()->user()->name ?? 'V', 0, 1)) }}
+            </div>
+            <div>
+                <h1 class="text-2xl font-extrabold text-slate-900">{{ $volunteer->name ?? auth()->user()->name }}</h1>
+                <div class="flex items-center gap-2 mt-1">
+                    @php
+                        $statusColor = match($volunteer->status) {
+                            'approved','active' => 'background:#d1fae5;color:#065f46',
+                            'pending'           => 'background:#fef3c7;color:#92400e',
+                            'rejected'          => 'background:#fee2e2;color:#991b1b',
+                            'suspended'         => 'background:#ffedd5;color:#9a3412',
+                            default             => 'background:#f1f5f9;color:#475569',
+                        };
+                    @endphp
+                    <span class="px-3 py-1 rounded-full text-xs font-bold" style="{{ $statusColor }}">
+                        {{ ucfirst($volunteer->status) }}
+                    </span>
+                    @if($volunteer->status === 'pending')
+                        <span class="text-xs font-medium" style="color:#b45309">Your application is under review</span>
                     @endif
                 </div>
+            </div>
+        </div>
+        <a href="{{ route('volunteer.index') }}"
+           class="px-5 py-2.5 rounded-xl font-semibold text-sm text-white shadow-md transition hover:opacity-90"
+           style="background: linear-gradient(135deg, #7c3aed, #2563eb)">
+            Browse Shifts
+        </a>
+    </div>
 
-                {{-- Quick Actions --}}
-                <div class="bg-slate-900 rounded-[2.5rem] p-8 lg:p-10 text-white">
-                    <h3 class="text-xl font-bold mb-6 flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                        </div>
-                        Quick Actions
-                    </h3>
-                    <div class="space-y-4">
-                        <a href="{{ route('volunteer.index') }}" class="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/10 transition-all font-bold text-sm">
-                            Find New Events
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                        </a>
-                        <a href="{{ route('volunteer.profile.edit') }}" class="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/10 transition-all font-bold text-sm text-left">
-                            Update Profile
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                        </a>
+    {{-- ── Stats Row ─────────────────────────────────────────────────────── --}}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Approved Hours</p>
+            <h3 class="text-3xl font-extrabold" style="color:#7c3aed">{{ number_format($totalApprovedHours, 1) }}</h3>
+            <p class="text-xs text-slate-400 mt-1">Total verified</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Pending Hours</p>
+            <h3 class="text-3xl font-extrabold" style="color:#d97706">{{ number_format($pendingHours, 1) }}</h3>
+            <p class="text-xs text-slate-400 mt-1">Awaiting approval</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Shifts Completed</p>
+            <h3 class="text-3xl font-extrabold" style="color:#059669">{{ $completedShifts }}</h3>
+            <p class="text-xs text-slate-400 mt-1">This lifetime</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Donations</p>
+            <h3 class="text-3xl font-extrabold" style="color:#2563eb">EGP {{ number_format($donationStats['total_donated'], 0) }}</h3>
+            <p class="text-xs text-slate-400 mt-1">{{ $donationStats['donation_count'] }} donations</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {{-- ── Left Column ────────────────────────────────────────────────── --}}
+        <div class="lg:col-span-2 space-y-6">
+
+            {{-- Pending Notice --}}
+            @if($volunteer->status === 'pending')
+            <div class="rounded-2xl border p-5 flex gap-4 items-start" style="background:#fffbeb;border-color:#fde68a">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:#fef3c7">
+                    <svg class="w-5 h-5" style="color:#d97706" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-bold" style="color:#92400e">Application Under Review</p>
+                    <p class="text-sm mt-1" style="color:#b45309">Your volunteer application is being reviewed by our admin team. Once approved you'll be able to browse and request shifts. You'll receive a notification by email.</p>
+                </div>
+            </div>
+            @endif
+
+            {{-- Upcoming Approved Shifts --}}
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                    <h2 class="font-bold text-slate-900 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full inline-block" style="background:#10b981"></span>
+                        Upcoming Approved Shifts
+                    </h2>
+                </div>
+                @forelse($upcomingRequests as $req)
+                <div class="px-6 py-4 border-b border-slate-50 flex items-center gap-4 hover:bg-slate-50 transition">
+                    <div class="w-12 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0"
+                         style="background:#ede9fe">
+                        <span class="text-xs font-bold" style="color:#7c3aed">{{ $req->shift?->shift_date?->format('M') ?? '—' }}</span>
+                        <span class="text-lg font-extrabold leading-none" style="color:#5b21b6">{{ $req->shift?->shift_date?->format('d') ?? '—' }}</span>
                     </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-slate-900 truncate">{{ $req->shift?->event?->title ?? 'Event' }}</p>
+                        <p class="text-sm text-slate-500">{{ $req->shift?->title }} &middot; {{ $req->shift?->start_time }} &ndash; {{ $req->shift?->end_time }}</p>
+                        <p class="text-xs text-slate-400">{{ $req->shift?->location ?? $req->shift?->event?->location }}</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-xs font-bold" style="background:#d1fae5;color:#065f46">Approved</span>
+                </div>
+                @empty
+                <div class="px-6 py-10 text-center text-slate-400">
+                    <svg class="w-10 h-10 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <p class="font-medium text-slate-500">No upcoming approved shifts yet</p>
+                    @if($volunteer->is_approved)
+                        <a href="{{ route('volunteer.index') }}" class="text-sm font-bold" style="color:#7c3aed">Browse available shifts &rarr;</a>
+                    @else
+                        <p class="text-sm mt-1" style="color:#d97706">Shifts will be available once your application is approved</p>
+                    @endif
+                </div>
+                @endforelse
+            </div>
+
+            {{-- Available Events to Join (only for approved volunteers) --}}
+            @if($volunteer->is_approved && $availableEvents->count())
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100">
+                    <h2 class="font-bold text-slate-900">Open Events — Request a Shift</h2>
+                </div>
+                <div class="divide-y divide-slate-50">
+                    @foreach($availableEvents->take(4) as $event)
+                    <div class="px-6 py-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="font-semibold text-slate-900">{{ $event->title }}</p>
+                            <span class="text-xs text-slate-400">{{ $event->start_date?->format('M d') }}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-3">{{ $event->location }}</p>
+                        @php $openShifts = $event->shifts->where('status','open'); @endphp
+                        @if($openShifts->count())
+                        <div class="space-y-2">
+                            @foreach($openShifts->take(2) as $shift)
+                            <div class="flex items-center justify-between rounded-xl px-4 py-2.5" style="background:#f8fafc">
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-800">{{ $shift->title }}</p>
+                                    <p class="text-xs text-slate-400">
+                                        {{ $shift->shift_date?->format('M d') }} &middot;
+                                        {{ $shift->start_time }}&ndash;{{ $shift->end_time }} &middot;
+                                        {{ $shift->available_spots }} spot{{ $shift->available_spots !== 1 ? 's' : '' }} left
+                                    </p>
+                                </div>
+                                <form action="{{ route('volunteer.shifts.request') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="shift_id" value="{{ $shift->id }}">
+                                    <button type="submit"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-bold text-white transition hover:opacity-90 whitespace-nowrap"
+                                            style="background: linear-gradient(135deg, #7c3aed, #2563eb)">
+                                        Request &rarr;
+                                    </button>
+                                </form>
+                            </div>
+                            @endforeach
+                        </div>
+                        @else
+                        <p class="text-xs text-slate-400 italic">No open shifts for this event</p>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            {{-- Attendance History --}}
+            @if($attendanceHistory->count())
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100">
+                    <h2 class="font-bold text-slate-900">Attendance History</h2>
+                </div>
+                <div class="divide-y divide-slate-50">
+                    @foreach($attendanceHistory as $log)
+                    @php
+                        $ac = match($log->status) {
+                            'verified'    => 'background:#d1fae5;color:#065f46',
+                            'checked_out' => 'background:#dbeafe;color:#1e40af',
+                            'checked_in'  => 'background:#fef3c7;color:#92400e',
+                            default       => 'background:#f1f5f9;color:#64748b',
+                        };
+                    @endphp
+                    <div class="px-6 py-3 flex items-center gap-4">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-slate-900 truncate">{{ $log->shift?->event?->title ?? '—' }}</p>
+                            <p class="text-xs text-slate-400">
+                                {{ $log->check_in?->format('M d, Y · H:i') }}
+                                @if($log->check_out) &rarr; {{ $log->check_out->format('H:i') }} ({{ number_format($log->calculated_hours, 1) }}h) @endif
+                            </p>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-bold" style="{{ $ac }}">
+                            {{ ucfirst(str_replace('_', ' ', $log->status)) }}
+                        </span>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+        </div>
+
+        {{-- ── Right Column ───────────────────────────────────────────────── --}}
+        <div class="space-y-6">
+
+            {{-- Profile Card --}}
+            <div class="rounded-2xl p-6 text-white shadow-lg" style="background: linear-gradient(135deg, #7c3aed, #2563eb)">
+                <h3 class="font-bold mb-4 text-xs uppercase tracking-widest" style="color:rgba(255,255,255,0.7)">Your Profile</h3>
+
+                @if(!empty($volunteer->skills) && count($volunteer->skills))
+                <div class="mb-4">
+                    <p class="text-xs mb-2" style="color:rgba(255,255,255,0.6)">Skills</p>
+                    <div class="flex flex-wrap gap-1.5">
+                        @foreach($volunteer->skills as $skill)
+                        <span class="px-2 py-1 rounded-lg text-xs font-medium" style="background:rgba(255,255,255,0.2)">{{ $skill }}</span>
+                        @endforeach
+                    </div>
+                </div>
+                @else
+                <p class="text-sm mb-4" style="color:rgba(255,255,255,0.6)">No skills listed yet.</p>
+                @endif
+
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="rounded-xl p-3" style="background:rgba(255,255,255,0.15)">
+                        <p class="text-2xl font-extrabold">{{ number_format($totalApprovedHours, 0) }}</p>
+                        <p class="text-xs" style="color:rgba(255,255,255,0.7)">Approved Hrs</p>
+                    </div>
+                    <div class="rounded-xl p-3" style="background:rgba(255,255,255,0.15)">
+                        <p class="text-2xl font-extrabold">{{ $slotRequests->where('status','approved')->count() }}</p>
+                        <p class="text-xs" style="color:rgba(255,255,255,0.7)">Shifts Joined</p>
+                    </div>
+                </div>
+
+                @if($volunteer->bio)
+                <p class="text-sm mt-4 leading-relaxed" style="color:rgba(255,255,255,0.75)">{{ Str::limit($volunteer->bio, 120) }}</p>
+                @endif
+            </div>
+
+            {{-- My Shift Requests --}}
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100">
+                    <h2 class="font-bold text-slate-900 text-sm">My Shift Requests</h2>
+                </div>
+                <div class="divide-y divide-slate-50 max-h-72 overflow-y-auto">
+                    @forelse($slotRequests as $req)
+                    <div class="px-5 py-3 flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-slate-900 truncate">
+                                {{ $req->shift?->title ?? ($req->campaign?->title ?? 'Legacy request') }}
+                            </p>
+                            <p class="text-xs text-slate-400">{{ $req->created_at->format('M d, Y') }}</p>
+                        </div>
+                        @php
+                            $rc = match($req->status) {
+                                'approved'  => 'background:#d1fae5;color:#065f46',
+                                'pending'   => 'background:#fef3c7;color:#92400e',
+                                'rejected'  => 'background:#fee2e2;color:#991b1b',
+                                'cancelled' => 'background:#f1f5f9;color:#94a3b8',
+                                default     => 'background:#f1f5f9;color:#94a3b8',
+                            };
+                        @endphp
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <span class="px-2 py-1 rounded-full text-xs font-bold" style="{{ $rc }}">
+                                {{ ucfirst($req->status) }}
+                            </span>
+                            @if($req->status === 'pending' && $req->shift_id)
+                            <form action="{{ route('volunteer.shifts.requests.cancel', $req->id) }}" method="POST">
+                                @csrf @method('PATCH')
+                                <button type="submit" class="text-xs font-medium text-red-400 hover:text-red-600 transition">Cancel</button>
+                            </form>
+                            @endif
+                        </div>
+                    </div>
+                    @empty
+                    <div class="px-5 py-8 text-center text-slate-400 text-sm">No shift requests yet.</div>
+                    @endforelse
                 </div>
             </div>
 
-            {{-- Main Content --}}
-            <div class="lg:w-2/3 space-y-12">
-                {{-- Custom Schedule Booking --}}
-                <section>
-                    <div class="flex items-center justify-between mb-8">
-                        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Book a Custom Slot</h2>
-                    </div>
-                    <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8">
-                        <form action="{{ route('volunteer.slot-requests.store') }}" method="POST" class="space-y-6">
-                            @csrf
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="space-y-2">
-                                    <label class="block text-sm font-bold text-slate-700 ml-1">Campaign (Optional)</label>
-                                    <select name="campaign_id" class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium appearance-none">
-                                        <option value="">-- General Volunteering --</option>
-                                        @foreach($campaigns as $campaign)
-                                            <option value="{{ $campaign->id }}">{{ $campaign->title }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="block text-sm font-bold text-slate-700 ml-1">Date</label>
-                                    <input type="date" name="requested_date" required min="{{ date('Y-m-d') }}"
-                                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium">
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="block text-sm font-bold text-slate-700 ml-1">Start Time</label>
-                                    <input type="time" name="requested_start_time" required
-                                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium">
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="block text-sm font-bold text-slate-700 ml-1">End Time</label>
-                                    <input type="time" name="requested_end_time" required
-                                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium">
-                                </div>
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block text-sm font-bold text-slate-700 ml-1">Notes (Optional)</label>
-                                <textarea name="notes" rows="2" placeholder="What are you planning to do?"
-                                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium resize-none"></textarea>
-                            </div>
-                            <button type="submit" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-lg rounded-2xl transition-all shadow-lg shadow-blue-500/30">
-                                Request Slot
-                            </button>
-                        </form>
-                    </div>
-                </section>
-
-                {{-- My Slot Requests --}}
-                <section>
-                    <div class="flex items-center justify-between mb-8">
-                        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">My Custom Slots</h2>
-                    </div>
-                    <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead>
-                                    <tr class="border-b border-slate-50">
-                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date / Time</th>
-                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Campaign</th>
-                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-50">
-                                    @forelse($slotRequests as $req)
-                                    <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="px-8 py-6">
-                                            <div class="font-bold text-slate-900">{{ $req->requested_date->format('M d, Y') }}</div>
-                                            <div class="text-xs text-slate-500">{{ $req->requested_start_time->format('H:i') }} - {{ $req->requested_end_time->format('H:i') }}</div>
-                                        </td>
-                                        <td class="px-8 py-6 text-sm text-slate-600">{{ $req->campaign?->title ?? 'General' }}</td>
-                                        <td class="px-8 py-6">
-                                            @if($req->status === 'approved')
-                                                <span class="px-3 py-1 bg-green-50 text-green-600 text-xs font-bold rounded-full">Approved</span>
-                                            @elseif($req->status === 'rejected')
-                                                <span class="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full">Rejected</span>
-                                            @else
-                                                <span class="px-3 py-1 bg-amber-50 text-amber-600 text-xs font-bold rounded-full">Pending</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-8 py-6">
-                                            @if($req->status === 'approved' && !$req->completed_at && $req->requested_date <= today())
-                                                <form action="{{ route('volunteer.slot-requests.complete', $req->id) }}" method="POST">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700">Mark Complete</button>
-                                                </form>
-                                            @elseif($req->completed_at)
-                                                <span class="text-xs text-slate-400 font-bold">Completed</span>
-                                            @else
-                                                <span class="text-xs text-slate-400">-</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="4" class="px-8 py-10 text-center text-slate-400 italic">No custom slot requests found.</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
+            {{-- Hour Logs --}}
+            @if($hourLogs->count())
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100">
+                    <h2 class="font-bold text-slate-900 text-sm">Hour Log Status</h2>
+                </div>
+                <div class="divide-y divide-slate-50">
+                    @foreach($hourLogs->take(5) as $log)
+                    @php
+                        $hc = match($log->status) {
+                            'approved'       => 'background:#d1fae5;color:#065f46',
+                            'pending_review' => 'background:#fef3c7;color:#92400e',
+                            'adjusted'       => 'background:#dbeafe;color:#1e40af',
+                            'rejected'       => 'background:#fee2e2;color:#991b1b',
+                            default          => 'background:#f1f5f9;color:#94a3b8',
+                        };
+                    @endphp
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-bold text-slate-900">{{ number_format($log->calculated_hours, 2) }} hrs</p>
+                            <p class="text-xs text-slate-400">{{ Str::limit($log->attendanceLog?->shift?->event?->title ?? '—', 30) }}</p>
                         </div>
-                    </div>
-                </section>
-
-                {{-- Upcoming Events --}}
-                <section>
-                    <div class="flex items-center justify-between mb-8">
-                        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Upcoming Events</h2>
-                        <span class="px-4 py-1.5 bg-green-50 text-green-600 text-xs font-bold rounded-full border border-green-100">
-                            {{ $upcomingSchedules->count() }} Active
+                        <span class="px-2 py-1 rounded-full text-xs font-bold" style="{{ $hc }}">
+                            {{ ucfirst(str_replace('_', ' ', $log->status)) }}
+                            @if(in_array($log->status, ['approved','adjusted'])) &bull; {{ number_format($log->approved_hours ?? $log->calculated_hours, 1) }}h @endif
                         </span>
                     </div>
-
-                    <div class="space-y-6">
-                        @forelse($upcomingSchedules as $schedule)
-                        <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-8 flex flex-col md:flex-row gap-8 items-center group hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
-                            <div class="w-20 h-20 rounded-2xl bg-blue-50 text-blue-600 flex flex-col items-center justify-center flex-shrink-0 border border-blue-100 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                <span class="text-2xl font-black leading-none">{{ $schedule->event_date->format('d') }}</span>
-                                <span class="text-[10px] font-bold uppercase tracking-widest">{{ $schedule->event_date->format('M') }}</span>
-                            </div>
-                            <div class="flex-grow text-center md:text-left">
-                                <h3 class="text-xl font-bold text-slate-900 mb-1">{{ $schedule->event_name }}</h3>
-                                <div class="flex flex-wrap justify-center md:justify-start gap-4 text-slate-500 font-medium text-sm">
-                                    <span class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        {{ $schedule->start_time->format('H:i') }} - {{ $schedule->end_time->format('H:i') }}
-                                    </span>
-                                    <span class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                        {{ $schedule->location_name }}
-                                    </span>
-                                </div>
-                            </div>
-                            <a href="{{ route('volunteer.schedule.show', $schedule->id) }}" class="px-6 py-3 bg-slate-50 text-slate-900 rounded-xl hover:bg-slate-900 hover:text-white transition-all font-bold text-sm border border-slate-100">
-                                View Details
-                            </a>
-                        </div>
-                        @empty
-                        <div class="py-16 text-center bg-white rounded-[2.5rem] border border-dashed border-slate-200">
-                            <p class="text-slate-400 font-medium italic">No upcoming events. Go find some!</p>
-                        </div>
-                        @endforelse
-                    </div>
-                </section>
-
-                {{-- Past Events (for logging hours) --}}
-                <section>
-                    <div class="flex items-center justify-between mb-8">
-                        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Past Events</h2>
-                        <span class="px-4 py-1.5 bg-slate-50 text-slate-500 text-xs font-bold rounded-full border border-slate-100">
-                            Action Required
-                        </span>
-                    </div>
-                    <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead>
-                                    <tr class="border-b border-slate-50">
-                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Event</th>
-                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date</th>
-                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action / Hours</th>
-                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-50">
-                                    @forelse($pastSchedules as $schedule)
-                                    <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="px-8 py-6 font-bold text-slate-900">{{ $schedule->event_name }}</td>
-                                        <td class="px-8 py-6 text-slate-500 font-medium">{{ $schedule->event_date->format('M d, Y') }}</td>
-                                        <td class="px-8 py-6">
-                                            @if(!$schedule->pivot->hours_worked && $schedule->event_date->isPast())
-                                                <form action="{{ route('volunteer.hours') }}" method="POST" class="flex items-center gap-2">
-                                                    @csrf
-                                                    <input type="hidden" name="schedule_id" value="{{ $schedule->id }}">
-                                                    <input type="number" name="hours" step="0.5" min="0.5" max="24" required 
-                                                           class="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500"
-                                                           placeholder="Hrs">
-                                                    <button type="submit" class="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
-                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                                    </button>
-                                                </form>
-                                            @else
-                                                <span class="px-3 py-1 bg-blue-50 text-blue-600 font-black rounded-lg text-sm">
-                                                    {{ $schedule->pivot->hours_worked ?? '-' }} hrs
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="px-8 py-6">
-                                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 text-[10px] font-bold uppercase tracking-wider rounded-full">
-                                                <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                                                {{ $schedule->pivot->status }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="4" class="px-8 py-10 text-center text-slate-400 italic">No past events found.</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                {{-- Hour Logs (History with Approval Status) --}}
-                <section>
-                    <div class="flex items-center justify-between mb-8">
-                        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Hour Logs & Status</h2>
-                        <span class="px-4 py-1.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-full border border-blue-100">
-                            {{ $hourLogs->count() }} Submissions
-                        </span>
-                    </div>
-                    <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead>
-                                    <tr class="border-b border-slate-50">
-                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reference</th>
-                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Submitted On</th>
-                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hours</th>
-                                        <th class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Approval Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-50">
-                                    @forelse($hourLogs as $log)
-                                    <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="px-8 py-6">
-                                            <div class="font-bold text-slate-900">{{ $log->schedule?->event_name ?? 'General' }}</div>
-                                        </td>
-                                        <td class="px-8 py-6 text-slate-500 font-medium">{{ \Carbon\Carbon::parse($log->date)->format('M d, Y') }}</td>
-                                        <td class="px-8 py-6">
-                                            <span class="px-3 py-1 bg-blue-50 text-blue-600 font-black rounded-lg text-sm">
-                                                {{ $log->hours }}
-                                            </span>
-                                        </td>
-                                        <td class="px-8 py-6">
-                                            @if($log->status === 'approved')
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-wider rounded-full">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                                    Approved
-                                                </span>
-                                            @else
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-bold uppercase tracking-wider rounded-full">
-                                                    <div class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></div>
-                                                    Pending
-                                                </span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="4" class="px-8 py-10 text-center text-slate-400 italic">No logs found.</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                {{-- Donation History & Certificates --}}
-                @if($recentDonations->count() > 0)
-                <section>
-                    <div class="flex items-center justify-between mb-8">
-                        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Recent Donations</h2>
-                        <a href="{{ route('user.dashboard') }}" class="text-blue-600 font-bold text-sm hover:underline">View All</a>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        @foreach($recentDonations as $donation)
-                        <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16V15m10-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                </div>
-                                <span class="px-3 py-1 bg-green-50 text-green-600 text-[10px] font-bold uppercase rounded-full">Completed</span>
-                            </div>
-                            <h3 class="font-bold text-slate-900 mb-1">{{ $donation->campaign->title }}</h3>
-                            <p class="text-2xl font-black text-slate-900 mb-4">${{ number_format($donation->amount) }}</p>
-                            
-                            @if($donation->certificate_uuid)
-                            <a href="{{ route('certificates.download', $donation->certificate_uuid) }}" class="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-700">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                Download Certificate
-                            </a>
-                            @endif
-                        </div>
-                        @endforeach
-                    </div>
-                </section>
-                @endif
+                    @endforeach
+                </div>
             </div>
-        </div>
+            @endif
+
+            {{-- Recent Donations --}}
+            @if($recentDonations->count())
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100">
+                    <h2 class="font-bold text-slate-900 text-sm">Recent Donations</h2>
+                </div>
+                <div class="divide-y divide-slate-50">
+                    @foreach($recentDonations as $don)
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900 truncate max-w-40">{{ $don->campaign?->title ?? 'General' }}</p>
+                            <p class="text-xs text-slate-400">{{ $don->created_at->format('M d, Y') }}</p>
+                        </div>
+                        <span class="text-sm font-bold" style="color:#2563eb">EGP {{ number_format($don->amount, 0) }}</span>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+        </div>{{-- end right column --}}
     </div>
+</div>
 </div>
 @endsection

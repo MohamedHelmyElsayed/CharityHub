@@ -27,8 +27,8 @@
                             @forelse($slotRequests as $req)
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="px-6 py-4">
-                                    <div class="font-bold text-gray-900">{{ $req->volunteer->name }}</div>
-                                    <div class="text-xs text-gray-500">{{ $req->volunteer->email }}</div>
+                                    <div class="font-bold text-gray-900">{{ $req->volunteer?->name ?? $req->volunteer?->user?->name ?? '—' }}</div>
+                                    <div class="text-xs text-gray-500">{{ $req->volunteer?->email ?? $req->volunteer?->user?->email ?? '' }}</div>
                                     @if($req->notes)
                                         <div class="text-xs text-gray-600 mt-2 bg-gray-100 p-2 rounded">
                                             <strong>Notes:</strong> {{ $req->notes }}
@@ -36,8 +36,8 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-sm">
-                                    <div class="font-bold text-gray-800">{{ $req->requested_date->format('M d, Y') }}</div>
-                                    <div class="text-gray-500">{{ $req->requested_start_time->format('H:i') }} - {{ $req->requested_end_time->format('H:i') }}</div>
+                                    <div class="font-bold text-gray-800">{{ \Carbon\Carbon::parse($req->requested_date)->format('M d, Y') }}</div>
+                                    <div class="text-gray-500">{{ substr($req->requested_start_time, 0, 5) }} - {{ substr($req->requested_end_time, 0, 5) }}</div>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-600">
                                     {{ $req->campaign?->title ?? 'General' }}

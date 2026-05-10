@@ -6,8 +6,12 @@ use App\Models\Campaign;
 use App\Models\Donation;
 use App\Models\Donor;
 use App\Models\FinancialLog;
+use App\Models\HourLog;
+use App\Models\AttendanceLog;
 use App\Models\Volunteer;
+use App\Models\VolunteerEvent;
 use App\Models\VolunteerSchedule;
+use App\Models\VolunteerSlotRequest;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -15,28 +19,39 @@ class AdminController extends Controller
     public function dashboard()
     {
         $stats = [
-            'total_raised' => Donation::where('status', 'completed')->sum('amount'),
-            'total_donors' => Donor::count(),
-            'active_campaigns' => Campaign::active()->count(),
-            'total_campaigns' => Campaign::count(),
-            'total_donations' => Donation::where('status', 'completed')->count(),
-            'pending_donations' => Donation::where('status', 'pending')->count(),
-            'active_volunteers' => Volunteer::where('status', 'active')->count(),
-            'total_volunteers' => Volunteer::count(),
-            'total_volunteer_hours' => \App\Models\VolunteerHour::sum('hours'),
+            // Financial
+            'total_raised'         => Donation::where('status', 'completed')->sum('amount'),
+            'total_donors'         => Donor::count(),
+            'active_campaigns'     => Campaign::active()->count(),
+            'total_campaigns'      => Campaign::count(),
+            'total_donations'      => Donation::where('status', 'completed')->count(),
+            'pending_donations'    => Donation::where('status', 'pending')->count(),
+            // Volunteer
+            'total_volunteers'     => Volunteer::count(),
+            'pending_volunteers'   => Volunteer::pending()->count(),
+            'approved_volunteers'  => Volunteer::approved()->count(),
+            'total_volunteer_hours'=> \App\Models\VolunteerHour::sum('hours'),
+            'total_approved_hours' => Volunteer::sum('total_approved_hours'),
+            'pending_hour_logs'    => HourLog::where('status', 'pending_review')->count(),
+            'pending_slot_requests'=> VolunteerSlotRequest::where('status', 'pending')->count(),
+            'active_events'        => VolunteerEvent::where('status', 'open')->count(),
+            'active_attendees'     => AttendanceLog::where('status', 'checked_in')->count(),
         ];
 
         $recentDonations = Donation::with(['donor', 'campaign'])
-            ->orderByDesc('created_at')
-            ->limit(10)
-            ->get();
+            ->orderByDesc('created_at')->limit(10)->get();
 
         $recentLogs = FinancialLog::with(['donor', 'campaign'])
-            ->orderByDesc('created_at')
-            ->limit(10)
-            ->get();
+            ->orderByDesc('created_at')->limit(10)->get();
 
-        return view('admin.dashboard', compact('stats', 'recentDonations', 'recentLogs'));
+        $pendingVolunteers = Volunteer::with('user')->pending()->latest()->limit(5)->get();
+        $pendingHourLogs   = HourLog::with(['volunteer', 'attendanceLog.shift.event'])->where('status', 'pending_review')->latest()->limit(5)->get();
+        $pendingRequests   = VolunteerSlotRequest::with(['volunteer', 'shift.event'])->where('status', 'pending')->latest()->limit(5)->get();
+
+        return view('admin.dashboard', compact(
+            'stats', 'recentDonations', 'recentLogs',
+            'pendingVolunteers', 'pendingHourLogs', 'pendingRequests'
+        ));
     }
 
     public function ledger(Request $request)
@@ -44,10 +59,13 @@ class AdminController extends Controller
         $query = FinancialLog::with(['donor', 'campaign', 'donation']);
 
         if ($request->filled('type')) {
-            $query->where('type', $request->type);
+            $query->where('transaction_type', $request->type);
         }
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+        if ($request->filled('gateway')) {
+            $query->where('gateway', $request->gateway);
         }
         if ($request->filled('from')) {
             $query->where('created_at', '>=', $request->from);

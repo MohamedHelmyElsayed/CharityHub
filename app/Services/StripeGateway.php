@@ -91,8 +91,10 @@ class StripeGateway implements PaymentGatewayInterface
         return ['checkout_url' => $session->url, 'session_id' => $session->id];
     }
 
-    public function cancelSubscription(string $subscriptionId): bool
+    public function cancelSubscription(?string $subscriptionId): bool
     {
+        if (!$subscriptionId) return false;
+
         try {
             \Stripe\Subscription::cancel($subscriptionId);
             return true;
@@ -141,5 +143,52 @@ class StripeGateway implements PaymentGatewayInterface
         }
 
         return null;
+    }
+
+    public function refundCharge(string $paymentIntentId, float $amount, ?string $reason = null): array
+    {
+        try {
+            $refund = \Stripe\Refund::create([
+                'payment_intent' => $paymentIntentId,
+                'amount' => (int) round($amount * 100),
+                'reason' => $reason ? (in_array($reason, ['duplicate', 'fraudulent', 'requested_by_customer']) ? $reason : null) : null,
+                'metadata' => [
+                    'reason_text' => $reason,
+                ],
+            ]);
+
+            return [
+                'status' => 'success',
+                'gateway_refund_id' => $refund->id,
+                'data' => $refund->toArray(),
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Stripe refund failed', [
+                'payment_intent' => $paymentIntentId,
+                'amount' => $amount,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    public function getSubscription(?string $subscriptionId): ?array
+    {
+        if (!$subscriptionId) return null;
+
+        try {
+            $subscription = \Stripe\Subscription::retrieve($subscriptionId);
+            return $subscription->toArray();
+        } catch (\Throwable $e) {
+            Log::error('Stripe subscription retrieval failed', [
+                'subscription_id' => $subscriptionId,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
     }
 }

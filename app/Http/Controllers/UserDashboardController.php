@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Donation;
 use App\Models\Certificate;
+use App\Models\Subscription;
 
 class UserDashboardController extends Controller
 {
@@ -30,6 +31,11 @@ class UserDashboardController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('pages.user-dashboard', compact('stats', 'recentDonations', 'certificates'));
+        $subscriptions = Subscription::with(['campaign'])
+            ->where('user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('pages.user-dashboard', compact('stats', 'recentDonations', 'certificates', 'subscriptions'));
     }
 }

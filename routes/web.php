@@ -53,7 +53,7 @@ Route::get('/campaigns/{slug}', [CampaignController::class, 'show'])->name('camp
 
 // ─── Donation Routes ─────────────────────────────────────────────────────────
 Route::get('/donate', [DonationController::class, 'showDonatePage'])->name('donate');
-Route::post('/donate/checkout', [DonationController::class, 'createCheckoutSession'])->name('donate.checkout')->middleware('auth');
+Route::post('/donate/checkout', [DonationController::class, 'createCheckoutSession'])->name('donate.checkout')->middleware(['auth', 'idempotency']);
 Route::get('/donate/success', [DonationController::class, 'success'])->name('donate.success');
 Route::get('/donate/cancel', [DonationController::class, 'cancel'])->name('donate.cancel');
 
@@ -69,6 +69,14 @@ Route::post('/volunteer/register', [VolunteerController::class, 'register'])->na
 Route::get('/volunteer/dashboard', [VolunteerController::class, 'dashboard'])->name('volunteer.dashboard')->middleware(['auth', 'verified']);
 Route::get('/volunteer/schedules/{schedule}', [VolunteerController::class, 'showSchedule'])->name('volunteer.schedule.show')->middleware('auth');
 Route::post('/volunteer/hours', [VolunteerController::class, 'logHours'])->name('volunteer.hours')->middleware('auth');
+
+// Shift Requests (new system)
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/volunteer/shifts/request', [\App\Http\Controllers\Volunteer\ShiftRequestController::class, 'store'])->name('volunteer.shifts.request');
+    Route::patch('/volunteer/shifts/requests/{slotRequest}/cancel', [\App\Http\Controllers\Volunteer\ShiftRequestController::class, 'cancel'])->name('volunteer.shifts.requests.cancel');
+});
+
+// Legacy slot requests
 Route::post('/volunteer/slot-requests', [\App\Http\Controllers\VolunteerSlotController::class, 'store'])->name('volunteer.slot-requests.store')->middleware('auth');
 Route::patch('/volunteer/slot-requests/{id}/complete', [\App\Http\Controllers\VolunteerSlotController::class, 'markComplete'])->name('volunteer.slot-requests.complete')->middleware('auth');
 
@@ -87,6 +95,13 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/my-dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard')->middleware(['auth', 'verified']);
+
+// ─── Donor Dashboard & Subscription Management ──────────────────────────────
+Route::middleware(['auth', 'verified'])->prefix('donor')->name('donor.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Donor\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/donations', [\App\Http\Controllers\Donor\DashboardController::class, 'donationHistory'])->name('donations.history');
+    Route::post('/subscriptions/{subscription}/cancel', [\App\Http\Controllers\Donor\DashboardController::class, 'cancelSubscription'])->name('subscriptions.cancel');
+});
 
 // ─── Impact Reports ───────────────────────────────────────────────────────────
 Route::get('/impact', [ImpactReportController::class, 'index'])->name('impact.index');
@@ -117,6 +132,7 @@ Route::prefix('admin')->name('custom_admin.')->middleware(['auth', 'role:admin,e
     // Donations Ledger (Renamed URL to avoid Filament conflict)
     Route::get('/manage-donations', [\App\Http\Controllers\Admin\DonationController::class, 'index'])->name('donations.index');
     Route::get('/manage-donations/{id}', [\App\Http\Controllers\Admin\DonationController::class, 'show'])->name('donations.show');
+    Route::post('/manage-donations/{id}/refund', [\App\Http\Controllers\Admin\DonationController::class, 'refund'])->name('donations.refund');
     
     // Donors (Renamed URL to avoid Filament conflict)
     Route::get('/manage-donors', [\App\Http\Controllers\Admin\DonorController::class, 'index'])->name('donors.index');

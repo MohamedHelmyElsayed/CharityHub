@@ -8,16 +8,29 @@ use Illuminate\Support\Str;
 
 class Donation extends Model
 {
-    use HasFactory;
+    use HasFactory, \Spatie\Activitylog\Traits\LogsActivity;
+
+    public function getActivitylogOptions(): \Spatie\Activitylog\LogOptions
+    {
+        return \Spatie\Activitylog\LogOptions::defaults()
+            ->logOnly(['status', 'amount', 'refunded_at'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     protected $fillable = [
         'user_id',
         'donor_id',
         'campaign_id',
+        'subscription_id',
         'amount',
         'currency',
         'type',
+        'is_recurring',
         'status',
+        'gateway',
+        'gateway_transaction_id',
+        'gateway_refund_id',
         'payment_id',
         'stripe_payment_intent_id',
         'idempotency_key',
@@ -33,8 +46,11 @@ class Donation extends Model
     protected $casts = [
         'amount' => 'decimal:2',
         'anonymous' => 'boolean',
+        'is_recurring' => 'boolean',
         'certificate_generated_at' => 'datetime',
         'refunded_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -64,6 +80,16 @@ class Donation extends Model
     public function certificate()
     {
         return $this->hasOne(Certificate::class);
+    }
+
+    public function subscription()
+    {
+        return $this->belongsTo(Subscription::class);
+    }
+
+    public function refund()
+    {
+        return $this->hasOne(Refund::class);
     }
 
     public function financialLogs()

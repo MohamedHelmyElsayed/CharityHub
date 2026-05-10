@@ -103,4 +103,34 @@ class FakePaymentGateway implements PaymentGatewayInterface
             ],
         ];
     }
+
+    /**
+     * Verify a payment session directly with the gateway.
+     * For testing, we assume any session starting with 'fake_session_' or 'fake_sub_' is valid.
+     */
+    public function verifyPayment(string $sessionId): ?array
+    {
+        $idempotencyKey = null;
+
+        if (str_starts_with($sessionId, 'fake_session_')) {
+            $idempotencyKey = str_replace('fake_session_', '', $sessionId);
+        } elseif (str_starts_with($sessionId, 'fake_sub_')) {
+            $idempotencyKey = str_replace('fake_sub_', '', $sessionId);
+        }
+
+        if ($idempotencyKey) {
+            return [
+                'type' => 'checkout.session.completed',
+                'event_id' => 'fake_v_' . uniqid(),
+                'data' => [
+                    'payment_intent' => 'fake_pi_' . uniqid(),
+                    'metadata' => [
+                        'idempotency_key' => $idempotencyKey,
+                    ],
+                ],
+            ];
+        }
+
+        return null;
+    }
 }
