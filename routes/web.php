@@ -74,6 +74,10 @@ Route::post('/volunteer/hours', [VolunteerController::class, 'logHours'])->name(
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/volunteer/shifts/request', [\App\Http\Controllers\Volunteer\ShiftRequestController::class, 'store'])->name('volunteer.shifts.request');
     Route::patch('/volunteer/shifts/requests/{slotRequest}/cancel', [\App\Http\Controllers\Volunteer\ShiftRequestController::class, 'cancel'])->name('volunteer.shifts.requests.cancel');
+    
+    // Self Check-in / Check-out
+    Route::post('/volunteer/attendance/check-in', [\App\Http\Controllers\Volunteer\AttendanceController::class, 'selfCheckIn'])->name('volunteer.attendance.check-in');
+    Route::post('/volunteer/attendance/{log}/check-out', [\App\Http\Controllers\Volunteer\AttendanceController::class, 'selfCheckOut'])->name('volunteer.attendance.check-out');
 });
 
 // Legacy slot requests
@@ -112,6 +116,14 @@ Route::get('/impact/{report:slug}/pdf', [ImpactReportController::class, 'downloa
 Route::post('/stripe/webhook', [DonationController::class, 'webhook'])->name('stripe.webhook');
 
 // ─── Admin Routes (blade-based, supplemental to Filament panel) ──────────────
+Route::get('/admin/filament-dashboard-alias', function() {
+    return redirect()->route('custom_admin.dashboard');
+})->name('filament.admin.pages.dashboard')->middleware(['auth', 'role:admin,employee']);
+
+Route::get('/admin/filament-donors-alias', function() {
+    return redirect()->route('custom_admin.donors');
+})->name('filament.admin.resources.donors.index')->middleware(['auth', 'role:admin,employee']);
+
 Route::prefix('admin')->name('custom_admin.')->middleware(['auth', 'role:admin,employee'])->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/ledger', [AdminController::class, 'ledger'])->name('ledger');
@@ -135,8 +147,9 @@ Route::prefix('admin')->name('custom_admin.')->middleware(['auth', 'role:admin,e
     Route::post('/manage-donations/{id}/refund', [\App\Http\Controllers\Admin\DonationController::class, 'refund'])->name('donations.refund');
     
     // Donors (Renamed URL to avoid Filament conflict)
-    Route::get('/manage-donors', [\App\Http\Controllers\Admin\DonorController::class, 'index'])->name('donors.index');
-    Route::get('/manage-donors/{id}', [\App\Http\Controllers\Admin\DonorController::class, 'show'])->name('donors.show');
+    // Route::get('/manage-donors', [\App\Http\Controllers\Admin\DonorController::class, 'index'])->name('donors.index');
+    // Route::get('/manage-donors/{id}', [\App\Http\Controllers\Admin\DonorController::class, 'show'])->name('donors.show');
+
     
     // Volunteers Management (Renamed URL to avoid Filament conflict)
     Route::get('/manage-volunteers', [\App\Http\Controllers\Admin\VolunteerController::class, 'index'])->name('volunteers.index');

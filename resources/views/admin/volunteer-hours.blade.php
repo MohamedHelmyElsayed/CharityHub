@@ -35,28 +35,30 @@
                             @forelse($hourLogs as $log)
                             <tr class="hover:bg-gray-50 transition">
                                 <td class="px-6 py-5">
-                                    <div class="text-sm font-bold text-gray-900">{{ $log->volunteer->name }}</div>
+                                    <div class="text-sm font-bold text-gray-900">{{ $log->volunteer->display_name }}</div>
                                     <div class="text-xs text-gray-500">{{ $log->volunteer->email }}</div>
                                 </td>
-                                <td class="px-6 py-5 text-sm text-gray-600 font-medium">
-                                    {{ $log->schedule->event_name }}
+                                <td class="px-6 py-5">
+                                    <div class="text-sm font-medium text-gray-900">{{ $log->attendanceLog?->shift?->event?->title ?? 'N/A' }}</div>
+                                    <div class="text-xs text-gray-500">{{ $log->attendanceLog?->shift?->title ?? 'N/A' }}</div>
                                 </td>
                                 <td class="px-6 py-5 text-sm text-gray-500">
-                                    {{ $log->schedule->event_date->format('M d, Y') }}
+                                    {{ $log->attendanceLog?->shift?->shift_date ? \Carbon\Carbon::parse($log->attendanceLog->shift->shift_date)->format('M d, Y') : 'N/A' }}
                                 </td>
                                 <td class="px-6 py-5 text-sm font-black text-primary-600">
-                                    {{ $log->hours }}
+                                    {{ number_format($log->calculated_hours, 2) }}
                                 </td>
                                 <td class="px-6 py-5 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-[10px] font-bold rounded-full uppercase tracking-widest {{ $log->status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                        {{ $log->status }}
+                                    <span class="px-3 py-1 inline-flex text-[10px] font-bold rounded-full uppercase tracking-widest {{ $log->status === 'approved' || $log->status === 'adjusted' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
+                                        {{ str_replace('_', ' ', $log->status) }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
-                                    @if($log->status !== 'approved')
-                                    <form action="{{ route('custom_admin.volunteer-hours.approve', $log->id) }}" method="POST" class="inline">
+                                    @if($log->status === 'pending_review')
+                                    <form action="{{ route('custom_admin.volunteer-hours.approve', $log->id) }}" method="POST" class="flex items-center justify-end gap-2">
                                         @csrf
-                                        <button type="submit" class="text-primary-600 hover:text-primary-900 font-bold">Approve</button>
+                                        <input type="number" step="0.01" name="adjusted_hours" placeholder="Override Hours" value="{{ $log->calculated_hours }}" class="w-24 text-xs rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" title="Adjust Calculated Hours">
+                                        <button type="submit" class="px-3 py-1.5 bg-primary-600 text-white rounded-md hover:bg-primary-700 font-bold text-xs shadow-sm transition">Approve</button>
                                     </form>
                                     @endif
                                 </td>

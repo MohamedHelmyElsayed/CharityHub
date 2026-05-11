@@ -10,21 +10,24 @@ class VolunteerHourController extends Controller
 {
     public function index()
     {
-        $hourLogs = VolunteerHour::with(['volunteer', 'schedule'])
+        // Use the new Enterprise HourLog model
+        $hourLogs = \App\Models\HourLog::with(['volunteer', 'attendanceLog.shift.event'])
+            ->orderByRaw("FIELD(status, 'pending_review') DESC")
             ->orderByDesc('created_at')
             ->paginate(20);
             
         return view('admin.volunteer-hours', compact('hourLogs'));
     }
 
-    public function approve(VolunteerHour $log)
+    public function approve(Request $request, \App\Models\HourLog $log, \App\Services\HourCalculationService $hourService)
     {
-        $log->update(['status' => 'approved']);
-        
-        // Update volunteer total hours
-        $volunteer = $log->volunteer;
-        $volunteer->increment('total_hours', $log->hours);
+        // Admin can optionally adjust the hours before approving
+        $adjustedHours = $request->input('adjusted_hours');
+        $reason = $request->input('adjustment_reason');
 
-        return back()->with('success', 'Hours approved successfully.');
+        // Approve using the service which handles volunteer totals, attendance status, and events
+        $hourService->approve($log, auth()->user(), $adjustedHours, $reason);
+
+        return back()->with('success', 'Hour log processed successfully.');
     }
 }

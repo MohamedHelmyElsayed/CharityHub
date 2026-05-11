@@ -106,6 +106,12 @@ class VolunteerController extends Controller
             ->where('volunteer_id', $volunteer->id)
             ->latest()->limit(10)->get();
 
+        // ── Active Check-Ins (Checked in but not out) ────────────────────────
+        $activeCheckIns = AttendanceLog::where('volunteer_id', $volunteer->id)
+            ->whereNull('check_out')
+            ->where('status', 'checked_in')
+            ->get()->keyBy('shift_id');
+
         // ── Attendance History ─────────────────────────────────────────────────
         $attendanceHistory = AttendanceLog::with(['shift.event'])
             ->where('volunteer_id', $volunteer->id)
@@ -140,7 +146,7 @@ class VolunteerController extends Controller
         return view('pages.volunteer-dashboard', compact(
             'volunteer', 'totalApprovedHours', 'pendingHours', 'completedShifts',
             'upcomingRequests', 'availableEvents', 'slotRequests',
-            'attendanceHistory', 'hourLogs',
+            'activeCheckIns', 'attendanceHistory', 'hourLogs',
             'upcomingSchedules', 'pastSchedules',
             'donationStats', 'recentDonations', 'campaigns'
         ));

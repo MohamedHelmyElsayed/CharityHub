@@ -104,7 +104,27 @@
                         <p class="text-sm text-slate-500">{{ $req->shift?->title }} &middot; {{ $req->shift?->start_time }} &ndash; {{ $req->shift?->end_time }}</p>
                         <p class="text-xs text-slate-400">{{ $req->shift?->location ?? $req->shift?->event?->location }}</p>
                     </div>
-                    <span class="px-2.5 py-1 rounded-full text-xs font-bold" style="background:#d1fae5;color:#065f46">Approved</span>
+                    
+                    <div class="flex-shrink-0">
+                        @if(isset($activeCheckIns) && $activeCheckIns->has($req->shift_id))
+                            <form action="{{ route('volunteer.attendance.check-out', $activeCheckIns->get($req->shift_id)->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm transition hover:opacity-90 whitespace-nowrap" style="background:#ea580c">
+                                    Check Out &rarr;
+                                </button>
+                            </form>
+                        @elseif($req->shift && $req->shift->shift_date)
+                            <form action="{{ route('volunteer.attendance.check-in') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="shift_id" value="{{ $req->shift_id }}">
+                                <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm transition hover:opacity-90 whitespace-nowrap" style="background:#10b981">
+                                    Check In
+                                </button>
+                            </form>
+                        @else
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold" style="background:#d1fae5;color:#065f46">Approved</span>
+                        @endif
+                    </div>
                 </div>
                 @empty
                 <div class="px-6 py-10 text-center text-slate-400">

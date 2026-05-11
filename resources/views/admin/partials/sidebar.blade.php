@@ -21,8 +21,8 @@
                class="{{ request()->routeIs('custom_admin.campaigns.*') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold' }} block px-4 py-2.5 rounded-lg text-sm transition">
                 Campaigns
             </a>
-            <a href="{{ route('custom_admin.donors.index') }}"
-               class="{{ request()->routeIs('custom_admin.donors.*') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold' }} block px-4 py-2.5 rounded-lg text-sm transition">
+            <a href="{{ route('custom_admin.donors') }}"
+               class="{{ request()->routeIs('custom_admin.donors*') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold' }} block px-4 py-2.5 rounded-lg text-sm transition">
                 Donors
             </a>
 

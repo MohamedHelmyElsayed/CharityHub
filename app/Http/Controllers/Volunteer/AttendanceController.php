@@ -113,4 +113,78 @@ class AttendanceController extends Controller
 
         return response()->json(['success' => 'Checked in successfully!', 'log_id' => $log->id]);
     }
+
+    /**
+     * Volunteer self check-in via web UI.
+     */
+    public function selfCheckIn(Request $request)
+    {
+        $request->validate([
+            'shift_id' => 'required|exists:volunteer_shifts,id',
+        ]);
+
+        $volunteer = auth()->user()?->volunteer;
+        if (!$volunteer) {
+            return back()->with('error', 'Volunteer profile not found.');
+        }
+
+        // Verify they have an approved slot request for this shift
+        $hasRequest = \App\Models\VolunteerSlotRequest::where('volunteer_id', $volunteer->id)
+            ->where('shift_id', $request->shift_id)
+            ->where('status', 'approved')
+            ->exists();
+
+        if (!$hasRequest) {
+            return back()->with('error', 'You do not have an approved request for this shift.');
+        }
+
+        // Prevent duplicate check-in
+        $existing = AttendanceLog::where('volunteer_id', $volunteer->id)
+            ->where('shift_id', $request->shift_id)
+            ->first();
+
+        if ($existing) {
+            return back()->with('error', 'You are already checked in.');
+        }
+
+        // Optional: Ensure it's the correct day. For demo purposes, we will just allow it.
+
+        $log = AttendanceLog::create([
+            'volunteer_id'    => $volunteer->id,
+            'shift_id'        => $request->shift_id,
+            'check_in'        => now(),
+            'check_in_method' => 'self',
+            'ip_address'      => $request->ip(),
+            'status'          => 'checked_in',
+        ]);
+
+        event(new VolunteerCheckedIn($log));
+
+        return back()->with('success', 'Checked in successfully!');
+    }
+
+    /**
+     * Volunteer self check-out via web UI.
+     */
+    public function selfCheckOut(Request $request, AttendanceLog $log)
+    {
+        $volunteer = auth()->user()?->volunteer;
+        if (!$volunteer || $log->volunteer_id !== $volunteer->id) {
+            return back()->with('error', 'Unauthorized.');
+        }
+
+        if ($log->check_out) {
+            return back()->with('error', 'You have already checked out.');
+        }
+
+        $log->update([
+            'check_out'        => now(),
+            'check_out_method' => 'self',
+            'status'           => 'checked_out',
+        ]);
+
+        event(new VolunteerCheckedOut($log));
+
+        return back()->with('success', 'Checked out successfully! Your hours are now pending review.');
+    }
 }
