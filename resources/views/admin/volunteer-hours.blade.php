@@ -49,24 +49,44 @@
                                     {{ number_format($log->calculated_hours, 2) }}
                                 </td>
                                 <td class="px-6 py-5 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-[10px] font-bold rounded-full uppercase tracking-widest {{ $log->status === 'approved' || $log->status === 'adjusted' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                        {{ str_replace('_', ' ', $log->status) }}
+                                    @php
+                                        $statusColors = [
+                                            'approved' => 'bg-green-100 text-green-800',
+                                            'adjusted' => 'bg-blue-100 text-blue-800',
+                                            'rejected' => 'bg-red-100 text-red-800',
+                                            'pending_review' => 'bg-yellow-100 text-yellow-800',
+                                        ];
+                                        $statusLabels = [
+                                            'approved' => 'Approved',
+                                            'adjusted' => 'Adjusted',
+                                            'rejected' => 'Declined',
+                                            'pending_review' => 'Pending Review',
+                                        ];
+                                    @endphp
+                                    <span class="px-3 py-1 inline-flex text-[10px] font-bold rounded-full uppercase tracking-widest {{ $statusColors[$log->status] ?? 'bg-gray-100 text-gray-800' }}">
+                                        {{ $statusLabels[$log->status] ?? str_replace('_', ' ', $log->status) }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
                                     @if($log->status === 'pending_review')
-                                    <form action="{{ route('custom_admin.volunteer-hours.approve', $log->id) }}" method="POST" class="flex items-center justify-end gap-2">
-                                        @csrf
-                                        <div class="relative">
-                                            <input type="number" step="0.01" name="adjusted_hours" placeholder="Hours" value="{{ $log->calculated_hours }}" 
-                                                   class="w-20 pr-1 text-[11px] font-bold rounded-lg border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" 
-                                                   title="Adjust Calculated Hours">
-                                        </div>
-                                        <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 font-extrabold text-[10px] uppercase tracking-wider shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5 active:scale-95">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                            Approve
-                                        </button>
-                                    </form>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <form action="{{ route('custom_admin.volunteer-hours.decline', $log->id) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 font-bold text-xs shadow-sm transition">Decline</button>
+                                        </form>
+                                        <form action="{{ route('custom_admin.volunteer-hours.approve', $log->id) }}" method="POST" class="flex items-center gap-2">
+                                            @csrf
+                                            <div class="relative">
+                                                <input type="number" step="0.01" name="adjusted_hours" placeholder="Hours" value="{{ $log->calculated_hours }}"
+                                                       class="w-20 pr-1 text-[11px] font-bold rounded-lg border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                                                       title="Adjust Calculated Hours">
+                                            </div>
+                                            <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 font-extrabold text-[10px] uppercase tracking-wider shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5 active:scale-95">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                                Approve
+                                            </button>
+                                        </form>
+                                    </div>
                                     @endif
                                 </td>
                             </tr>

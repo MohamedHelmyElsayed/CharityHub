@@ -160,6 +160,7 @@ Route::prefix('admin')->name('custom_admin.')->middleware(['auth', 'role:admin,e
     // Volunteer Hour Approval
     Route::get('/volunteer-hours', [\App\Http\Controllers\Admin\VolunteerHourController::class, 'index'])->name('volunteer-hours.index');
     Route::post('/volunteer-hours/{log}/approve', [\App\Http\Controllers\Admin\VolunteerHourController::class, 'approve'])->name('volunteer-hours.approve');
+    Route::post('/volunteer-hours/{log}/decline', [\App\Http\Controllers\Admin\VolunteerHourController::class, 'decline'])->name('volunteer-hours.decline');
 
     // Volunteer Slot Requests
     Route::get('/volunteer-slots', [\App\Http\Controllers\Admin\VolunteerSlotController::class, 'index'])->name('volunteer-slots.index');

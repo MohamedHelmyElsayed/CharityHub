@@ -21,13 +21,20 @@ class VolunteerHourController extends Controller
 
     public function approve(Request $request, \App\Models\HourLog $log, \App\Services\HourCalculationService $hourService)
     {
-        // Admin can optionally adjust the hours before approving
         $adjustedHours = $request->input('adjusted_hours');
         $reason = $request->input('adjustment_reason');
 
-        // Approve using the service which handles volunteer totals, attendance status, and events
         $hourService->approve($log, auth()->user(), $adjustedHours, $reason);
 
-        return back()->with('success', 'Hour log processed successfully.');
+        return back()->with('success', 'Hour log approved successfully.');
+    }
+
+    public function decline(Request $request, \App\Models\HourLog $log, \App\Services\HourCalculationService $hourService)
+    {
+        $request->validate(['decline_reason' => 'nullable|string|max:500']);
+
+        $hourService->reject($log, auth()->user(), $request->input('decline_reason', ''));
+
+        return back()->with('success', 'Hour log declined.');
     }
 }
