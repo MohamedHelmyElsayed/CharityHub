@@ -217,9 +217,9 @@ class DonationController extends Controller
             $donation = Donation::where('idempotency_key', $idempotencyKey)->first();
 
             // If it's a recurring donation, create or update the Subscription record
-            if ($donation->type === 'recurring') {
+            if ($donation->type === 'recurring' && !empty($data['subscription'])) {
                 $subscription = Subscription::updateOrCreate(
-                    ['gateway_subscription_id' => $data['subscription'] ?? null],
+                    ['gateway_subscription_id' => $data['subscription']],
                     [
                         'user_id' => $donation->user_id,
                         'donor_id' => $donation->donor_id,
