@@ -57,8 +57,15 @@
                                     @if($log->status === 'pending_review')
                                     <form action="{{ route('custom_admin.volunteer-hours.approve', $log->id) }}" method="POST" class="flex items-center justify-end gap-2">
                                         @csrf
-                                        <input type="number" step="0.01" name="adjusted_hours" placeholder="Override Hours" value="{{ $log->calculated_hours }}" class="w-24 text-xs rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" title="Adjust Calculated Hours">
-                                        <button type="submit" class="px-3 py-1.5 bg-primary-600 text-white rounded-md hover:bg-primary-700 font-bold text-xs shadow-sm transition">Approve</button>
+                                        <div class="relative">
+                                            <input type="number" step="0.01" name="adjusted_hours" placeholder="Hours" value="{{ $log->calculated_hours }}" 
+                                                   class="w-20 pr-1 text-[11px] font-bold rounded-lg border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" 
+                                                   title="Adjust Calculated Hours">
+                                        </div>
+                                        <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 font-extrabold text-[10px] uppercase tracking-wider shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5 active:scale-95">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                            Approve
+                                        </button>
                                     </form>
                                     @endif
                                 </td>
