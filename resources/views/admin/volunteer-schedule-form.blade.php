@@ -133,6 +133,104 @@
                     </div>
                 </form>
             </div>
+
+            {{-- ── Manage Shifts Section ────────────────────────────────────────── --}}
+            @if(isset($schedule))
+            <div class="mt-12 space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-extrabold text-gray-900">Opportunity Shifts</h2>
+                    <p class="text-sm text-gray-500 font-medium">Add time slots for volunteers to join.</p>
+                </div>
+
+                {{-- Add Shift Form --}}
+                <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                    <form action="{{ route('custom_admin.schedules.shifts.store', $schedule->id) }}" method="POST">
+                        @csrf
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Shift Title</label>
+                                <input type="text" name="title" required placeholder="e.g. Morning Shift"
+                                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Date</label>
+                                <input type="date" name="shift_date" required value="{{ $schedule->start_date->format('Y-m-d') }}"
+                                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Time Range</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="time" name="start_time" required value="09:00"
+                                           class="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm">
+                                    <span class="text-gray-400">-</span>
+                                    <input type="time" name="end_time" required value="17:00"
+                                           class="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Goal</label>
+                                <input type="number" name="required_volunteers" required value="5" min="1"
+                                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500">
+                            </div>
+                            <div class="md:col-span-5 flex justify-end">
+                                <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg transition-all shadow-sm">
+                                    + Add Shift
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                {{-- Existing Shifts List --}}
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Shift</th>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Date & Time</th>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-center">Capacity</th>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse($schedule->shifts as $shift)
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <p class="font-bold text-gray-900">{{ $shift->title }}</p>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider {{ $shift->status === 'open' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
+                                        {{ $shift->status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">
+                                    <div class="font-medium">{{ $shift->shift_date->format('M d, Y') }}</div>
+                                    <div class="text-xs text-gray-400">{{ $shift->start_time }} - {{ $shift->end_time }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="text-sm font-bold text-gray-900">{{ $shift->assigned_count }} / {{ $shift->required_volunteers }}</div>
+                                    <div class="w-24 h-1.5 bg-gray-100 rounded-full mx-auto mt-1 overflow-hidden">
+                                        @php $pct = min(100, ($shift->assigned_count / $shift->required_volunteers) * 100); @endphp
+                                        <div class="h-full bg-emerald-500" style="width: {{ $pct }}%"></div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <form action="{{ route('custom_admin.schedules.shifts.destroy', $shift->id) }}" method="POST" onsubmit="return confirm('Remove this shift?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="px-6 py-12 text-center text-gray-400 italic">No shifts created yet.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>

@@ -126,7 +126,7 @@ class VolunteerEventResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('view_public')
-                    ->label('View Page')
+                    =>label('View Page')
                     ->icon('heroicon-o-arrow-top-right-on-square')
                     ->url(fn (VolunteerEvent $record) => route('volunteering.show', $record->slug))
                     ->openUrlInNewTab(),
@@ -138,7 +138,12 @@ class VolunteerEventResource extends Resource
             ]);
     }
 
-    public static function getRelations(): array { return []; }
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
 
     public static function getPages(): array
     {

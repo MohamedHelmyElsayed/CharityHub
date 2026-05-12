@@ -119,13 +119,13 @@
                                     </form>
                                 </div>
                                 <div class="flex flex-wrap gap-1 mt-auto">
-                                    @foreach(array_slice($vol->skills, 0, 3) as $skill)
+                                    @foreach(array_slice($vol->skills ?? [], 0, 3) as $skill)
                                         <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-full border border-gray-200">
                                             {{ $skill }}
                                         </span>
                                     @endforeach
-                                    @if(count($vol->skills) > 3)
-                                        <span class="px-2 py-0.5 text-gray-400 text-[10px] font-bold">+{{ count($vol->skills) - 3 }}</span>
+                                    @if(count($vol->skills ?? []) > 3)
+                                        <span class="px-2 py-0.5 text-gray-400 text-[10px] font-bold">+{{ count($vol->skills ?? []) - 3 }}</span>
                                     @endif
                                 </div>
                             </div>

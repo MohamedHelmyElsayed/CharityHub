@@ -283,7 +283,7 @@
             <div class="rounded-2xl p-6 text-white shadow-lg" style="background: linear-gradient(135deg, #7c3aed, #2563eb)">
                 <h3 class="font-bold mb-4 text-xs uppercase tracking-widest" style="color:rgba(255,255,255,0.7)">Your Profile</h3>
 
-                @if(!empty($volunteer->skills) && count($volunteer->skills))
+                @if(!empty($volunteer->skills) && is_array($volunteer->skills) && count($volunteer->skills))
                 <div class="mb-4">
                     <p class="text-xs mb-2" style="color:rgba(255,255,255,0.6)">Skills</p>
                     <div class="flex flex-wrap gap-1.5">

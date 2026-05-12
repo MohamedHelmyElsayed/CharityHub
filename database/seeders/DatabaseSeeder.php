@@ -212,55 +212,55 @@ class DatabaseSeeder extends Seeder
         // ── Subscriptions ─────────────────────────────────────────────────────
         // Active monthly subscription (donor1 → campaign2)
         Subscription::firstOrCreate(
-            ['stripe_id' => 'sub_seed_active_001'],
+            ['gateway_subscription_id' => 'sub_seed_active_001'],
             [
-                'donor_id'      => $donor1->id,
-                'campaign_id'   => $campaign2->id,
-                'stripe_id'     => 'sub_seed_active_001',
-                'stripe_status' => 'active',
-                'amount'        => 25,
-                'currency'      => 'USD',
+                'donor_id'                => $donor1->id,
+                'campaign_id'             => $campaign2->id,
+                'gateway_subscription_id' => 'sub_seed_active_001',
+                'status'                  => 'active',
+                'amount'                  => 25,
+                'currency'                => 'USD',
             ]
         );
 
         // Cancelled subscription (donor2 → campaign1)
         Subscription::firstOrCreate(
-            ['stripe_id' => 'sub_seed_cancelled_002'],
+            ['gateway_subscription_id' => 'sub_seed_cancelled_002'],
             [
-                'donor_id'      => $donor2->id,
-                'campaign_id'   => $campaign1->id,
-                'stripe_id'     => 'sub_seed_cancelled_002',
-                'stripe_status' => 'canceled',
-                'amount'        => 50,
-                'currency'      => 'USD',
-                'ends_at'       => now()->subDays(15),
+                'donor_id'                => $donor2->id,
+                'campaign_id'             => $campaign1->id,
+                'gateway_subscription_id' => 'sub_seed_cancelled_002',
+                'status'                  => 'canceled',
+                'amount'                  => 50,
+                'currency'                => 'USD',
+                'ends_at'                 => now()->subDays(15),
             ]
         );
 
         // ── Financial Logs ────────────────────────────────────────────────────
         FinancialLog::create([
-            'donor_id' => $donor1->id,
-            'campaign_id' => $campaign1->id,
-            'donation_id' => $donation1->id,
-            'amount' => 500,
-            'currency' => 'USD',
-            'type' => 'donation',
-            'stripe_event_id' => 'evt_seed_001',
-            'status' => 'success',
-            'metadata' => ['donation_type' => 'one_time', 'campaign_title' => $campaign1->title],
-            'ip_address' => '127.0.0.1',
+            'donor_id'               => $donor1->id,
+            'campaign_id'            => $campaign1->id,
+            'donation_id'            => $donation1->id,
+            'amount'                 => 500,
+            'currency'               => 'USD',
+            'transaction_type'       => 'donation',
+            'gateway_transaction_id' => 'evt_seed_001',
+            'status'                 => 'success',
+            'metadata'               => ['donation_type' => 'one_time', 'campaign_title' => $campaign1->title],
+            'ip_address'             => '127.0.0.1',
         ]);
 
         FinancialLog::create([
-            'donor_id' => $donor2->id,
-            'campaign_id' => $campaign2->id,
-            'donation_id' => $donation2->id,
-            'amount' => 1500,
-            'currency' => 'USD',
-            'type' => 'donation',
-            'stripe_event_id' => 'evt_seed_002',
-            'status' => 'success',
-            'metadata' => ['donation_type' => 'one_time', 'campaign_title' => $campaign2->title],
+            'donor_id'               => $donor2->id,
+            'campaign_id'            => $campaign2->id,
+            'donation_id'            => $donation2->id,
+            'amount'                 => 1500,
+            'currency'               => 'USD',
+            'transaction_type'       => 'donation',
+            'gateway_transaction_id' => 'evt_seed_002',
+            'status'                 => 'success',
+            'metadata'               => ['donation_type' => 'one_time', 'campaign_title' => $campaign2->title],
         ]);
 
         // ── Volunteers ────────────────────────────────────────────────────

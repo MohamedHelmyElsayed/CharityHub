@@ -176,6 +176,10 @@ Route::prefix('admin')->name('custom_admin.')->middleware(['auth', 'role:admin,e
         'destroy' => 'impact-reports.destroy',
     ]);
 
+    // Volunteer Shifts
+    Route::post('/manage-schedules/{eventId}/shifts', [\App\Http\Controllers\Admin\VolunteerShiftController::class, 'store'])->name('schedules.shifts.store');
+    Route::delete('/manage-shifts/{id}', [\App\Http\Controllers\Admin\VolunteerShiftController::class, 'destroy'])->name('schedules.shifts.destroy');
+
     // Full Schedule Management (Renamed URL to avoid Filament conflict)
     Route::resource('manage-schedules', \App\Http\Controllers\Admin\VolunteerScheduleController::class)->names([
         'index' => 'schedules.index',

@@ -97,7 +97,7 @@ class ShiftConflictService
     {
         return VolunteerApplication::where('user_id', $volunteer->user_id)
             ->where('event_id', $shift->event_id)
-            ->where('status', 'approved')
+            ->whereIn('status', ['approved', 'pending'])
             ->exists();
     }
 }

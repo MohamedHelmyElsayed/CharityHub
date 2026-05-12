@@ -27,11 +27,11 @@ class ImpactReport extends Model
     {
         static::creating(function (ImpactReport $report) {
             if (empty($report->slug)) {
-                $base = Str::slug($report->title);
+                $base = Str::limit(Str::slug($report->title), 200, '');
                 $slug = $base;
                 $i = 1;
                 while (static::where('slug', $slug)->exists()) {
-                    $slug = $base . '-' . $i++;
+                    $slug = Str::limit($base, 190, '') . '-' . $i++;
                 }
                 $report->slug = $slug;
             }
