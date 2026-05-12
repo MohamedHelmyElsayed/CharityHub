@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use Illuminate\Http\Request;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\VolunteerController;
@@ -26,21 +24,6 @@ Route::post('/register', [RegisterController::class, 'register'])->middleware('g
 // ─── Google OAuth ────────────────────────────────────────────────────────────
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google')->middleware('guest');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
-
-// ─── Email Verification Routes ───────────────────────────────────────────────
-Route::get('/email/verify', function () {
-    return view('auth.verify-email');
-})->middleware('auth')->name('verification.notice');
-
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
-    return redirect()->route('dashboard');
-})->middleware(['auth', 'signed'])->name('verification.verify');
-
-Route::post('/email/verification-notification', function (Request $request) {
-    $request->user()->sendEmailVerificationNotification();
-    return back()->with('message', 'Verification link sent!');
-})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
 // ─── Public Campaign Routes ─────────────────────────────────────────────────
 Route::get('/', function () {
@@ -78,12 +61,12 @@ Route::post('/volunteering/{event:slug}/apply', [ApplicationController::class, '
 Route::get('/volunteer', fn() => redirect()->route('volunteering.index'))->name('volunteer.index');
 Route::get('/volunteer/profile', [VolunteerController::class, 'profile'])->name('volunteer.profile.edit')->middleware('auth');
 Route::post('/volunteer/register', [VolunteerController::class, 'register'])->name('volunteer.register')->middleware('auth');
-Route::get('/volunteer/dashboard', [VolunteerController::class, 'dashboard'])->name('volunteer.dashboard')->middleware(['auth', 'verified']);
+Route::get('/volunteer/dashboard', [VolunteerController::class, 'dashboard'])->name('volunteer.dashboard')->middleware('auth');
 Route::get('/volunteer/schedules/{schedule}', [VolunteerController::class, 'showSchedule'])->name('volunteer.schedule.show')->middleware('auth');
 Route::post('/volunteer/hours', [VolunteerController::class, 'logHours'])->name('volunteer.hours')->middleware('auth');
 
 // Shift Requests (new system)
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware('auth')->group(function () {
     Route::post('/volunteer/shifts/request', [\App\Http\Controllers\Volunteer\ShiftRequestController::class, 'store'])->name('volunteer.shifts.request');
     Route::patch('/volunteer/shifts/requests/{slotRequest}/cancel', [\App\Http\Controllers\Volunteer\ShiftRequestController::class, 'cancel'])->name('volunteer.shifts.requests.cancel');
 
@@ -108,9 +91,9 @@ Route::get('/dashboard', function () {
     }
 
     return redirect()->route('user.dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware('auth')->name('dashboard');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware('auth')->group(function () {
     Route::get('/my-dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
     Route::get('/my-profile', [UserDashboardController::class, 'profile'])->name('user.profile');
     Route::put('/my-profile', [UserDashboardController::class, 'updateProfile'])->name('user.profile.update');
@@ -119,7 +102,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // ─── Donor Dashboard & Subscription Management ──────────────────────────────
-Route::middleware(['auth', 'verified'])->prefix('donor')->name('donor.')->group(function () {
+Route::middleware('auth')->prefix('donor')->name('donor.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Donor\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/donations', [\App\Http\Controllers\Donor\DashboardController::class, 'donationHistory'])->name('donations.history');
     Route::post('/subscriptions/{subscription}/cancel', [\App\Http\Controllers\Donor\DashboardController::class, 'cancelSubscription'])->name('subscriptions.cancel');
