@@ -18,6 +18,7 @@ class VolunteerController extends Controller
     public function opportunities()
     {
         $opportunities = VolunteerEvent::with(['shifts', 'campaign'])
+            ->withCount('approvedApplications')
             ->whereIn('status', ['open', 'full', 'completed'])
             ->orderByDesc('start_date')
             ->get();

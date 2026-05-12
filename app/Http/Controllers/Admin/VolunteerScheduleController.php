@@ -3,21 +3,21 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\VolunteerSchedule;
+use App\Models\VolunteerEvent;
 use App\Models\Campaign;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class VolunteerScheduleController extends Controller
 {
     public function index()
     {
-        $schedules = VolunteerSchedule::with(['campaign', 'volunteers'])
-            ->orderByDesc('event_date')
+        $schedules = VolunteerEvent::with(['campaign', 'shifts'])
+            ->withCount('approvedApplications')
+            ->orderByDesc('start_date')
             ->paginate(15);
             
-        $volunteers = \App\Models\Volunteer::where('status', 'active')->get();
-            
-        return view('admin.volunteer-schedules', compact('schedules', 'volunteers'));
+        return view('admin.volunteer-schedules', compact('schedules'));
     }
 
     public function create()
@@ -30,51 +30,72 @@ class VolunteerScheduleController extends Controller
     {
         $validated = $request->validate([
             'campaign_id' => 'required|exists:campaigns,id',
-            'event_name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
             'location' => 'required|string|max:255',
-            'event_date' => 'required|date|after_or_equal:today',
-            'start_time' => 'required',
-            'end_time' => 'required|after:start_time',
+            'start_date' => 'required|date|after_or_equal:today',
+            'end_date' => 'required|date|after_or_equal:start_date',
             'max_volunteers' => 'required|integer|min:1',
+            'event_type' => 'required|string',
+            'category' => 'required|string',
+            'required_skills' => 'nullable|string',
+            'registration_deadline' => 'nullable|date|before_or_equal:start_date',
         ]);
 
-        VolunteerSchedule::create($validated);
+        $validated['slug'] = Str::slug($validated['title']) . '-' . rand(100, 999);
+        $validated['created_by'] = auth()->id();
+        $validated['status'] = 'open';
+        
+        // Convert skills string to array if provided
+        if ($request->filled('required_skills')) {
+            $validated['required_skills'] = array_map('trim', explode(',', $validated['required_skills']));
+        }
 
-        return redirect()->route('custom_admin.schedules.index')->with('success', 'Schedule created successfully.');
+        VolunteerEvent::create($validated);
+
+        return redirect()->route('custom_admin.schedules.index')->with('success', 'Volunteer Opportunity created successfully.');
     }
 
     public function edit($id)
     {
-        $schedule = VolunteerSchedule::findOrFail($id);
+        $schedule = VolunteerEvent::findOrFail($id);
         $campaigns = Campaign::active()->get();
         return view('admin.volunteer-schedule-form', compact('schedule', 'campaigns'));
     }
 
     public function update(Request $request, $id)
     {
-        $schedule = VolunteerSchedule::findOrFail($id);
+        $event = VolunteerEvent::findOrFail($id);
         
         $validated = $request->validate([
             'campaign_id' => 'required|exists:campaigns,id',
-            'event_name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
             'location' => 'required|string|max:255',
-            'event_date' => 'required|date',
-            'start_time' => 'required',
-            'end_time' => 'required',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
             'max_volunteers' => 'required|integer|min:1',
-            'status' => 'required|in:scheduled,cancelled,completed',
+            'event_type' => 'required|string',
+            'category' => 'required|string',
+            'required_skills' => 'nullable|string',
+            'status' => 'required|in:open,full,completed,cancelled',
+            'registration_deadline' => 'nullable|date|before_or_equal:start_date',
         ]);
 
-        $schedule->update($validated);
+        if ($request->filled('required_skills')) {
+            $validated['required_skills'] = array_map('trim', explode(',', $validated['required_skills']));
+        } else {
+            $validated['required_skills'] = [];
+        }
 
-        return redirect()->route('custom_admin.schedules.index')->with('success', 'Schedule updated successfully.');
+        $event->update($validated);
+
+        return redirect()->route('custom_admin.schedules.index')->with('success', 'Opportunity updated successfully.');
     }
 
     public function destroy($id)
     {
-        VolunteerSchedule::findOrFail($id)->delete();
-        return redirect()->route('custom_admin.schedules.index')->with('success', 'Schedule deleted successfully.');
+        VolunteerEvent::findOrFail($id)->delete();
+        return redirect()->route('custom_admin.schedules.index')->with('success', 'Opportunity deleted successfully.');
     }
 }

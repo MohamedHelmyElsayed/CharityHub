@@ -34,7 +34,7 @@
             </a>
             <a href="{{ route('custom_admin.schedules.index') }}"
                class="{{ request()->routeIs('custom_admin.schedules.*') ? 'bg-violet-50 text-violet-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold' }} block px-4 py-2.5 rounded-lg text-sm transition">
-                Event Schedules
+                Volunteer Opportunities
             </a>
             <a href="{{ route('custom_admin.volunteer-slots.index') }}"
                class="{{ request()->routeIs('custom_admin.volunteer-slots.*') ? 'bg-violet-50 text-violet-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold' }} block px-4 py-2.5 rounded-lg text-sm transition">

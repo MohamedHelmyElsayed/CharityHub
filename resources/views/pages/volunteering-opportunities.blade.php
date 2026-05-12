@@ -89,8 +89,10 @@
             'draft'     => ['#fef3c7','#92400e','Coming Soon'],
         ];
         $st = $statusMap[$opp->status] ?? ['#f1f5f9','#475569', ucfirst($opp->status)];
-        $totalVolunteers = $opp->shifts->sum('required_volunteers');
-        $assignedCount   = $opp->shifts->sum('assigned_count');
+        
+        // Use event max_volunteers if set, otherwise fallback to shifts sum
+        $totalVolunteers = $opp->max_volunteers > 0 ? $opp->max_volunteers : $opp->shifts->sum('required_volunteers');
+        $assignedCount   = $opp->approved_applications_count ?? $opp->shifts->sum('assigned_count');
         $spotsLeft       = max(0, $totalVolunteers - $assignedCount);
     @endphp
 
