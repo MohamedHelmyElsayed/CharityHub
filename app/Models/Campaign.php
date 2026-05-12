@@ -48,7 +48,7 @@ class Campaign extends Model
     {
         static::creating(function (Campaign $campaign) {
             if (empty($campaign->slug)) {
-                $campaign->slug = Str::slug($campaign->title) . '-' . Str::random(6);
+                $campaign->slug = Str::limit(Str::slug($campaign->title), 190, '') . '-' . Str::random(6);
             }
         });
     }

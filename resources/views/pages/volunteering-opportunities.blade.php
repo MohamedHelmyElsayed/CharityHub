@@ -170,11 +170,11 @@
                     {{-- Skills --}}
                     @if(!empty($opp->required_skills))
                     <div class="flex flex-wrap gap-1.5 mt-4">
-                        @foreach(array_slice($opp->required_skills, 0, 4) as $skill)
+                        @foreach(array_slice($opp->required_skills ?? [], 0, 4) as $skill)
                         <span class="px-2 py-0.5 rounded-lg text-xs font-medium" style="background:#f1f5f9;color:#64748b">{{ $skill }}</span>
                         @endforeach
-                        @if(count($opp->required_skills) > 4)
-                        <span class="px-2 py-0.5 rounded-lg text-xs font-medium text-slate-400">+{{ count($opp->required_skills) - 4 }} more</span>
+                        @if(count($opp->required_skills ?? []) > 4)
+                        <span class="px-2 py-0.5 rounded-lg text-xs font-medium text-slate-400">+{{ count($opp->required_skills ?? []) - 4 }} more</span>
                         @endif
                     </div>
                     @endif

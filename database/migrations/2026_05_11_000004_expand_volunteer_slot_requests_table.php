@@ -36,7 +36,13 @@ return new class extends Migration
         });
 
         // Update status enum
-        DB::statement("ALTER TABLE volunteer_slot_requests MODIFY COLUMN status ENUM('pending','approved','rejected','cancelled','completed') NOT NULL DEFAULT 'pending'");
+        if (Schema::getConnection()->getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE volunteer_slot_requests MODIFY COLUMN status ENUM('pending','approved','rejected','cancelled','completed') NOT NULL DEFAULT 'pending'");
+        } else {
+            Schema::table('volunteer_slot_requests', function (Blueprint $table) {
+                $table->string('status')->default('pending')->change();
+            });
+        }
     }
 
     public function down(): void

@@ -32,6 +32,22 @@ class ShiftRequestController extends Controller
 
         $shift = VolunteerShift::with('event')->findOrFail($request->shift_id);
 
+        // Auto-create application if missing
+        $application = \App\Models\VolunteerApplication::where('user_id', auth()->id())
+            ->where('event_id', $shift->event_id)
+            ->first();
+
+        if (!$application) {
+            $application = \App\Models\VolunteerApplication::create([
+                'user_id'        => auth()->id(),
+                'event_id'       => $shift->event_id,
+                'status'         => 'pending',
+                'motivation'     => 'Auto-applied via shift request.',
+                'skills_offered' => implode(', ', $volunteer->skills ?? []),
+                'availability'   => 'As per shift request',
+            ]);
+        }
+
         // Single validate() call handles: full, deadline, duplicate, opportunity scope, conflict
         $error = $this->conflictService->validate($volunteer, $shift);
         if ($error) {

@@ -50,7 +50,13 @@ return new class extends Migration
 
         // Update status enum to support all required statuses
         // We do this via raw SQL because MySQL enums need ALTER TABLE
-        DB::statement("ALTER TABLE volunteers MODIFY COLUMN status ENUM('pending','approved','active','rejected','suspended','inactive') NOT NULL DEFAULT 'pending'");
+        if (Schema::getConnection()->getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE volunteers MODIFY COLUMN status ENUM('pending','approved','active','rejected','suspended','inactive') NOT NULL DEFAULT 'pending'");
+        } else {
+            Schema::table('volunteers', function (Blueprint $table) {
+                $table->string('status')->default('pending')->change();
+            });
+        }
     }
 
     public function down(): void
