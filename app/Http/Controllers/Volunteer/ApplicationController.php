@@ -20,6 +20,11 @@ class ApplicationController extends Controller
                 ->with('info', 'Please log in to apply for this opportunity.');
         }
 
+        if (auth()->user()->isAdmin()) {
+            return redirect()->route('volunteering.show', $event->slug)
+                ->with('error', 'Admins cannot apply for volunteering opportunities.');
+        }
+
         // Check if registration is still open
         if ($event->registration_deadline && now()->gt($event->registration_deadline)) {
             return redirect()->route('volunteering.show', $event->slug)
@@ -46,6 +51,11 @@ class ApplicationController extends Controller
     {
         if (!auth()->check()) {
             return redirect()->route('login');
+        }
+
+        if (auth()->user()->isAdmin()) {
+            return redirect()->route('volunteering.show', $event->slug)
+                ->with('error', 'Admins cannot apply for volunteering opportunities.');
         }
 
         // Double-check deadline

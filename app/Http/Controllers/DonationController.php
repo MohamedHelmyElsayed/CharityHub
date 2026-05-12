@@ -57,6 +57,10 @@ class DonationController extends Controller
             'idempotency_key' => 'required|string|max:64',
         ]);
 
+        if (auth()->user()->isAdmin()) {
+            return back()->with('error', 'Admins cannot make donations.');
+        }
+
         $campaign = Campaign::findOrFail($validated['campaign_id']);
 
         if ($campaign->status === 'ended') {
