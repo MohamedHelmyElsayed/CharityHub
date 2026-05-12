@@ -17,6 +17,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        \Illuminate\Support\Facades\URL::forceScheme('https');
         Event::listen(
             \App\Events\DonationReceived::class,
             \App\Listeners\SendDonationConfirmation::class,
