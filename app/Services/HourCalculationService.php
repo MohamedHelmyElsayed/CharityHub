@@ -30,11 +30,20 @@ class HourCalculationService
     }
 
     /**
-     * Calculate hours between check_in and check_out.
+     * Calculate hours using the shift's scheduled start/end times.
+     * Falls back to actual clock difference if the shift has no schedule.
      */
     public function calculate(AttendanceLog $log): float
     {
         if (!$log->check_out) return 0.0;
+
+        // Use the shift's written slot hours (start_time – end_time)
+        $log->loadMissing('shift');
+        if ($log->shift && $log->shift->start_time && $log->shift->end_time) {
+            return $log->shift->duration_hours; // defined on VolunteerShift model
+        }
+
+        // Fallback: actual clock difference
         return round($log->check_in->floatDiffInHours($log->check_out), 2);
     }
 

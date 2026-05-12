@@ -11,9 +11,10 @@ class VolunteerEvent extends Model
 
     protected $fillable = [
         'campaign_id', 'created_by', 'title', 'slug', 'description',
-        'location', 'latitude', 'longitude', 'event_type', 'required_skills',
-        'max_volunteers', 'cover_image', 'gallery', 'registration_deadline',
-        'start_date', 'end_date', 'status',
+        'location', 'latitude', 'longitude', 'event_type', 'category',
+        'required_skills', 'max_volunteers', 'cover_image', 'banner_image',
+        'gallery', 'registration_deadline', 'start_date', 'end_date', 'status',
+        'requirements', 'benefits',
     ];
 
     protected $casts = [
@@ -41,6 +42,16 @@ class VolunteerEvent extends Model
     public function shifts()
     {
         return $this->hasMany(VolunteerShift::class, 'event_id');
+    }
+
+    public function applications()
+    {
+        return $this->hasMany(VolunteerApplication::class, 'event_id');
+    }
+
+    public function approvedApplications()
+    {
+        return $this->hasMany(VolunteerApplication::class, 'event_id')->where('status', 'approved');
     }
 
     // ── Scopes ─────────────────────────────────────────────────────────────────

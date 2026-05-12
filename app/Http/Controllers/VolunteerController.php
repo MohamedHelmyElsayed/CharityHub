@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AttendanceLog;
 use App\Models\HourLog;
+use App\Models\VolunteerApplication;
 use App\Models\VolunteerEvent;
 use App\Models\VolunteerSlotRequest;
 use App\Models\VolunteerShift;
@@ -12,33 +13,69 @@ use Illuminate\Http\Request;
 
 class VolunteerController extends Controller
 {
-    public function index()
-    {
-        // New event-based data
-        $events = VolunteerEvent::with('shifts')->upcoming()->latest('start_date')->take(9)->get();
+    // ── Public: Opportunities Listing ─────────────────────────────────────────
 
-        // Legacy schedule-based data (still used by volunteer.blade.php form dropdown)
-        $schedules = \App\Models\VolunteerSchedule::with('campaign')
-            ->where('status', 'scheduled')
-            ->where('event_date', '>=', today())
-            ->orderBy('event_date')
+    public function opportunities()
+    {
+        $opportunities = VolunteerEvent::with(['shifts', 'campaign'])
+            ->whereIn('status', ['open', 'full', 'completed'])
+            ->orderByDesc('start_date')
             ->get();
 
-        $campaigns = \App\Models\Campaign::active()
-            ->whereHas('volunteerSchedules', function ($q) {
-                $q->where('status', 'scheduled')->where('event_date', '>=', today());
-            })->get();
+        $categories = $opportunities->pluck('category')
+            ->merge($opportunities->pluck('event_type'))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
 
-        $myVolunteer = auth()->check() ? auth()->user()->volunteer : null;
-
-        return view('pages.volunteer', compact('events', 'schedules', 'campaigns', 'myVolunteer'));
+        return view('pages.volunteering-opportunities', compact('opportunities', 'categories'));
     }
+
+    // ── Public: Opportunity Detail ─────────────────────────────────────────────
+
+    public function showOpportunity(VolunteerEvent $event)
+    {
+        $event->load(['shifts', 'campaign', 'applications']);
+        $opportunity = $event;
+
+        // Current user's application for this opportunity
+        $userApplication = null;
+        $mySlotRequestIds = collect();
+
+        if (auth()->check()) {
+            $userApplication = VolunteerApplication::where('event_id', $event->id)
+                ->where('user_id', auth()->id())
+                ->first();
+
+            // Shifts this user has already requested
+            $volunteer = auth()->user()->volunteer;
+            if ($volunteer) {
+                $mySlotRequestIds = VolunteerSlotRequest::where('volunteer_id', $volunteer->id)
+                    ->whereIn('status', ['pending', 'approved'])
+                    ->pluck('shift_id');
+            }
+        }
+
+        return view('pages.volunteering-opportunity-detail',
+            compact('opportunity', 'userApplication', 'mySlotRequestIds'));
+    }
+
+    // ── Legacy: Volunteer Index (redirects to new opportunities page) ──────────
+
+    public function index()
+    {
+        return redirect()->route('volunteering.index');
+    }
+
+    // ── Volunteer Profile & Registration ──────────────────────────────────────
 
     public function profile()
     {
         $myVolunteer = auth()->user()->volunteer;
         if (!$myVolunteer) {
-            return redirect()->route('volunteer.index')->with('info', 'Please register as a volunteer first.');
+            return redirect()->route('volunteering.index')
+                ->with('info', 'Please apply for an opportunity first.');
         }
         return view('pages.volunteer-profile-edit', compact('myVolunteer'));
     }
@@ -69,8 +106,11 @@ class VolunteerController extends Controller
             ]
         );
 
-        return redirect()->route('volunteer.dashboard')->with('success', 'Volunteer application submitted! An admin will review it shortly.');
+        return redirect()->route('volunteer.dashboard')
+            ->with('success', 'Profile updated!');
     }
+
+    // ── Volunteer Dashboard ────────────────────────────────────────────────────
 
     public function dashboard()
     {
@@ -78,39 +118,56 @@ class VolunteerController extends Controller
         $volunteer = $user->volunteer;
 
         if (!$volunteer) {
-            return redirect()->route('volunteer.index')->with('info', 'Please register as a volunteer first.');
+            return redirect()->route('volunteering.index')
+                ->with('info', 'Browse and apply for an opportunity to get started.');
         }
 
         // ── Stats ──────────────────────────────────────────────────────────────
         $totalApprovedHours = $volunteer->total_approved_hours;
-        $pendingHours       = HourLog::where('volunteer_id', $volunteer->id)->where('status', 'pending_review')->sum('calculated_hours');
-        $completedShifts    = AttendanceLog::where('volunteer_id', $volunteer->id)->whereIn('status', ['checked_out', 'verified'])->count();
+        $pendingHours       = HourLog::where('volunteer_id', $volunteer->id)
+            ->where('status', 'pending_review')->sum('calculated_hours');
+        $completedShifts    = AttendanceLog::where('volunteer_id', $volunteer->id)
+            ->whereIn('status', ['checked_out', 'verified'])->count();
 
-        // ── Upcoming Shifts (safe join-based ordering) ─────────────────────────
+        // ── My Applications (per opportunity) ──────────────────────────────────
+        $myApplications = VolunteerApplication::with('event')
+            ->where('user_id', $user->id)
+            ->latest()->get();
+
+        $approvedApplications = $myApplications->where('status', 'approved');
+        $pendingApplications  = $myApplications->where('status', 'pending');
+
+        // ── Upcoming Approved Shifts (scoped to approved opportunities) ─────────
+        $approvedEventIds = $approvedApplications->pluck('event_id');
+
         $upcomingRequests = VolunteerSlotRequest::with(['shift.event'])
             ->where('volunteer_slot_requests.volunteer_id', $volunteer->id)
             ->where('volunteer_slot_requests.status', 'approved')
             ->whereNotNull('volunteer_slot_requests.shift_id')
             ->join('volunteer_shifts', 'volunteer_slot_requests.shift_id', '=', 'volunteer_shifts.id')
+            ->whereIn('volunteer_shifts.event_id', $approvedEventIds->toArray() ?: [0])
             ->where('volunteer_shifts.shift_date', '>=', today())
             ->orderBy('volunteer_shifts.shift_date')
             ->orderBy('volunteer_shifts.start_time')
             ->select('volunteer_slot_requests.*')
             ->limit(5)->get();
 
-        // ── Available Events ───────────────────────────────────────────────────
-        $availableEvents = VolunteerEvent::with('shifts')->upcoming()->take(6)->get();
-
-        // ── Slot Requests History (all, including legacy without shift_id) ──────
-        $slotRequests = VolunteerSlotRequest::with(['shift.event'])
-            ->where('volunteer_id', $volunteer->id)
-            ->latest()->limit(10)->get();
-
-        // ── Active Check-Ins (Checked in but not out) ────────────────────────
+        // ── Active Check-Ins ───────────────────────────────────────────────────
         $activeCheckIns = AttendanceLog::where('volunteer_id', $volunteer->id)
             ->whereNull('check_out')
             ->where('status', 'checked_in')
             ->get()->keyBy('shift_id');
+
+        // ── Completed Shift IDs ────────────────────────────────────────────────
+        $completedShiftIds = AttendanceLog::where('volunteer_id', $volunteer->id)
+            ->where('status', 'verified')
+            ->whereHas('hourLog', fn ($q) => $q->whereIn('status', ['approved', 'adjusted']))
+            ->pluck('shift_id')->toArray();
+
+        // ── Slot Requests history ──────────────────────────────────────────────
+        $slotRequests = VolunteerSlotRequest::with(['shift.event'])
+            ->where('volunteer_id', $volunteer->id)
+            ->latest()->limit(10)->get();
 
         // ── Attendance History ─────────────────────────────────────────────────
         $attendanceHistory = AttendanceLog::with(['shift.event'])
@@ -122,7 +179,7 @@ class VolunteerController extends Controller
             ->where('volunteer_id', $volunteer->id)
             ->latest()->limit(10)->get();
 
-        // ── Legacy compatibility: old schedules ────────────────────────────────
+        // ── Legacy schedules (backward compat) ─────────────────────────────────
         $upcomingSchedules = $volunteer->schedules()
             ->where('event_date', '>=', today())
             ->where('volunteer_schedules.status', 'scheduled')
@@ -132,7 +189,13 @@ class VolunteerController extends Controller
             ->where('event_date', '<', today())
             ->orderByDesc('event_date')->limit(5)->get();
 
-        // ── Donations (if also a donor) ────────────────────────────────────────
+        // ── Available Opportunities (for approved volunteers) ───────────────────
+        $availableEvents = VolunteerEvent::with('shifts')
+            ->whereIn('status', ['open'])
+            ->whereNotIn('id', $myApplications->pluck('event_id')->toArray())
+            ->take(4)->get();
+
+        // ── Donations ──────────────────────────────────────────────────────────
         $donationStats = [
             'total_donated'      => \App\Models\Donation::where('user_id', $user->id)->completed()->sum('amount'),
             'donation_count'     => \App\Models\Donation::where('user_id', $user->id)->completed()->count(),
@@ -145,8 +208,10 @@ class VolunteerController extends Controller
 
         return view('pages.volunteer-dashboard', compact(
             'volunteer', 'totalApprovedHours', 'pendingHours', 'completedShifts',
+            'myApplications', 'approvedApplications', 'pendingApplications',
             'upcomingRequests', 'availableEvents', 'slotRequests',
             'activeCheckIns', 'attendanceHistory', 'hourLogs',
+            'completedShiftIds',
             'upcomingSchedules', 'pastSchedules',
             'donationStats', 'recentDonations', 'campaigns'
         ));
@@ -170,11 +235,11 @@ class VolunteerController extends Controller
         ]);
 
         \App\Models\VolunteerHour::create([
-            'volunteer_id'           => $volunteer->id,
-            'volunteer_schedule_id'  => $validated['schedule_id'],
-            'date'                   => now()->toDateString(),
-            'hours'                  => $validated['hours'],
-            'status'                 => 'pending',
+            'volunteer_id'          => $volunteer->id,
+            'volunteer_schedule_id' => $validated['schedule_id'],
+            'date'                  => now()->toDateString(),
+            'hours'                 => $validated['hours'],
+            'status'                => 'pending',
         ]);
 
         return back()->with('success', 'Hours logged and pending admin approval.');

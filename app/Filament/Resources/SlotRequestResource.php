@@ -47,8 +47,8 @@ class SlotRequestResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('volunteer.name')->searchable()->sortable()->label('Volunteer'),
-                Tables\Columns\TextColumn::make('shift.event.title')->label('Event')->searchable(),
-                Tables\Columns\TextColumn::make('shift.title')->label('Shift'),
+                Tables\Columns\TextColumn::make('shift.event.title')->label('Initiative')->searchable()->sortable()->weight('bold'),
+                Tables\Columns\TextColumn::make('shift.title')->label('Shift Slot'),
                 Tables\Columns\TextColumn::make('shift.shift_date')->date()->label('Date')->sortable(),
                 Tables\Columns\TextColumn::make('shift.start_time')->label('Start'),
                 Tables\Columns\TextColumn::make('shift.end_time')->label('End'),

@@ -3,27 +3,62 @@
 namespace App\Services;
 
 use App\Models\Volunteer;
+use App\Models\VolunteerApplication;
 use App\Models\VolunteerShift;
 use App\Models\VolunteerSlotRequest;
 
 class ShiftConflictService
 {
     /**
-     * Check if volunteer has an approved slot that overlaps with the given shift.
+     * Run all validations. Returns null if OK, error string if blocked.
+     */
+    public function validate(Volunteer $volunteer, VolunteerShift $shift): ?string
+    {
+        if ($this->isShiftFull($shift)) {
+            return 'This shift is already at full capacity.';
+        }
+        if ($this->isRegistrationExpired($shift)) {
+            return 'The registration deadline for this opportunity has passed.';
+        }
+        if ($this->hasDuplicateRequest($volunteer, $shift)) {
+            return 'You already have a pending or approved request for this shift.';
+        }
+        if (!$this->isApprovedForOpportunity($volunteer, $shift)) {
+            return 'You must be approved for this opportunity before requesting a shift.';
+        }
+        if ($conflict = $this->findConflict($volunteer, $shift)) {
+            $other = $conflict->shift;
+            return "This shift overlaps with '{$other?->event?->title} — {$other?->title}' "
+                 . "({$other?->start_time} – {$other?->end_time}) on the same day.";
+        }
+        return null;
+    }
+
+    /**
+     * Check if volunteer has an approved/pending slot that overlaps with the given shift.
      */
     public function hasConflict(Volunteer $volunteer, VolunteerShift $shift): bool
     {
+        return $this->findConflict($volunteer, $shift) !== null;
+    }
+
+    /**
+     * Return the first conflicting VolunteerSlotRequest (with shift.event loaded).
+     */
+    public function findConflict(Volunteer $volunteer, VolunteerShift $shift): ?VolunteerSlotRequest
+    {
         return $volunteer->slotRequests()
-            ->where('status', 'approved')
+            ->whereIn('status', ['pending', 'approved'])
             ->whereHas('shift', function ($q) use ($shift) {
                 $q->where('shift_date', $shift->shift_date)
                   ->where('id', '!=', $shift->id)
                   ->where(function ($q2) use ($shift) {
-                      // Overlaps if: existing.start < new.end AND existing.end > new.start
                       $q2->where('start_time', '<', $shift->end_time)
                          ->where('end_time', '>', $shift->start_time);
                   });
-            })->exists();
+            })
+            ->with('shift.event')
+            ->first();
     }
 
     /**
@@ -40,9 +75,7 @@ class ShiftConflictService
     public function isRegistrationExpired(VolunteerShift $shift): bool
     {
         $event = $shift->event;
-        if (!$event || !$event->registration_deadline) {
-            return false;
-        }
+        if (!$event || !$event->registration_deadline) return false;
         return now()->gt($event->registration_deadline);
     }
 
@@ -58,28 +91,13 @@ class ShiftConflictService
     }
 
     /**
-     * Run all validations and return array of errors (empty = OK).
+     * Volunteer must have an approved application for the opportunity that owns this shift.
      */
-    public function validate(Volunteer $volunteer, VolunteerShift $shift): array
+    public function isApprovedForOpportunity(Volunteer $volunteer, VolunteerShift $shift): bool
     {
-        $errors = [];
-
-        if ($this->isShiftFull($shift)) {
-            $errors[] = 'This shift is already at full capacity.';
-        }
-        if ($this->isRegistrationExpired($shift)) {
-            $errors[] = 'The registration deadline for this event has passed.';
-        }
-        if ($this->hasDuplicateRequest($volunteer, $shift)) {
-            $errors[] = 'You already have a pending or approved request for this shift.';
-        }
-        if ($this->hasConflict($volunteer, $shift)) {
-            $errors[] = 'This shift overlaps with another shift you are already assigned to.';
-        }
-        if (!$volunteer->is_approved) {
-            $errors[] = 'Your volunteer profile must be approved before requesting shifts.';
-        }
-
-        return $errors;
+        return VolunteerApplication::where('user_id', $volunteer->user_id)
+            ->where('event_id', $shift->event_id)
+            ->where('status', 'approved')
+            ->exists();
     }
 }

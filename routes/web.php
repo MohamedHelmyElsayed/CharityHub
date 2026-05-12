@@ -14,6 +14,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\StaffDashboardController;
+use App\Http\Controllers\Volunteer\ApplicationController;
 
 // ─── Auth Routes ───────────────────────────────────────────────────────────
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login')->middleware('guest');
@@ -62,8 +63,14 @@ Route::get('/verify/{uuid}', [CertificateController::class, 'verify'])->name('ve
 Route::get('/certificates/{uuid}/download', [CertificateController::class, 'download'])
     ->name('certificates.download');
 
-// ─── Volunteer Routes ─────────────────────────────────────────────────────────
-Route::get('/volunteer', [VolunteerController::class, 'index'])->name('volunteer.index');
+// ─── Volunteering Opportunities (new public system) ──────────────────────────
+Route::get('/volunteering', [VolunteerController::class, 'opportunities'])->name('volunteering.index');
+Route::get('/volunteering/{event:slug}', [VolunteerController::class, 'showOpportunity'])->name('volunteering.show');
+Route::get('/volunteering/{event:slug}/apply', [ApplicationController::class, 'create'])->name('volunteering.apply')->middleware('auth');
+Route::post('/volunteering/{event:slug}/apply', [ApplicationController::class, 'store'])->name('volunteering.apply.store')->middleware('auth');
+
+// ─── Volunteer Routes (legacy — redirect old /volunteer to new /volunteering) ──
+Route::get('/volunteer', fn() => redirect()->route('volunteering.index'))->name('volunteer.index');
 Route::get('/volunteer/profile', [VolunteerController::class, 'profile'])->name('volunteer.profile.edit')->middleware('auth');
 Route::post('/volunteer/register', [VolunteerController::class, 'register'])->name('volunteer.register')->middleware('auth');
 Route::get('/volunteer/dashboard', [VolunteerController::class, 'dashboard'])->name('volunteer.dashboard')->middleware(['auth', 'verified']);

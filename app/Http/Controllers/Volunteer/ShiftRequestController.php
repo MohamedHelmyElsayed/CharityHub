@@ -16,6 +16,7 @@ class ShiftRequestController extends Controller
 
     /**
      * Volunteer requests to join a shift.
+     * Only allowed if the volunteer is approved for the opportunity that owns this shift.
      */
     public function store(Request $request)
     {
@@ -29,24 +30,24 @@ class ShiftRequestController extends Controller
             return back()->with('error', 'You must have a volunteer profile to request shifts.');
         }
 
-        $shift  = VolunteerShift::with('event')->findOrFail($request->shift_id);
-        $errors = $this->conflictService->validate($volunteer, $shift);
+        $shift = VolunteerShift::with('event')->findOrFail($request->shift_id);
 
-        if (!empty($errors)) {
-            return back()->withErrors($errors);
+        // Single validate() call handles: full, deadline, duplicate, opportunity scope, conflict
+        $error = $this->conflictService->validate($volunteer, $shift);
+        if ($error) {
+            return back()->with('error', $error);
         }
 
-        $slotRequest = VolunteerSlotRequest::create([
-            'volunteer_id'          => $volunteer->id,
-            'shift_id'              => $shift->id,
-            'campaign_id'           => $shift->event?->campaign_id,
-            'notes'                 => $request->notes,
-            'status'                => 'pending',
-            'requested_at'          => now(),
-            // Legacy NOT NULL columns — populated from the shift
-            'requested_date'        => $shift->shift_date,
-            'requested_start_time'  => $shift->start_time,
-            'requested_end_time'    => $shift->end_time,
+        VolunteerSlotRequest::create([
+            'volunteer_id'         => $volunteer->id,
+            'shift_id'             => $shift->id,
+            'campaign_id'          => $shift->event?->campaign_id,
+            'notes'                => $request->notes,
+            'status'               => 'pending',
+            'requested_at'         => now(),
+            'requested_date'       => $shift->shift_date,
+            'requested_start_time' => $shift->start_time,
+            'requested_end_time'   => $shift->end_time,
         ]);
 
         return back()->with('success', 'Shift request submitted! You will be notified once it is reviewed.');
@@ -89,9 +90,7 @@ class ShiftRequestController extends Controller
             'approved_by' => auth()->id(),
         ]);
 
-        // Increment shift count
         $slotRequest->shift?->incrementAssignedCount();
-
         event(new ShiftApproved($slotRequest));
 
         return back()->with('success', 'Shift request approved and volunteer notified.');

@@ -33,10 +33,10 @@
                 </div>
             </div>
         </div>
-        <a href="{{ route('volunteer.index') }}"
+        <a href="{{ route('volunteering.index') }}"
            class="px-5 py-2.5 rounded-xl font-semibold text-sm text-white shadow-md transition hover:opacity-90"
            style="background: linear-gradient(135deg, #7c3aed, #2563eb)">
-            Browse Shifts
+            Browse Opportunities
         </a>
     </div>
 
@@ -84,6 +84,45 @@
             </div>
             @endif
 
+            {{-- My Applications --}}
+            @if(isset($myApplications) && $myApplications->count())
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                    <h2 class="font-bold text-slate-900 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full inline-block" style="background:#7c3aed"></span>
+                        My Opportunity Applications
+                    </h2>
+                    <a href="{{ route('volunteering.index') }}" class="text-xs font-bold" style="color:#7c3aed">Browse More &rarr;</a>
+                </div>
+                @foreach($myApplications->take(5) as $app)
+                @php
+                    $appColors = match($app->status) {
+                        'approved' => 'background:#d1fae5;color:#065f46',
+                        'rejected' => 'background:#fee2e2;color:#991b1b',
+                        default    => 'background:#fef3c7;color:#92400e',
+                    };
+                @endphp
+                <div class="px-6 py-4 border-b border-slate-50 flex items-center gap-4 hover:bg-slate-50 transition">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#ede9fe">
+                        <svg class="w-5 h-5" style="color:#7c3aed" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-slate-900 truncate">{{ $app->event?->title ?? '—' }}</p>
+                        <p class="text-xs text-slate-400">Applied {{ $app->created_at->format('M d, Y') }}</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold" style="{{ $appColors }}">{{ ucfirst($app->status) }}</span>
+                        @if($app->status === 'approved' && $app->event)
+                        <a href="{{ route('volunteering.show', $app->event->slug) }}"
+                           class="px-2.5 py-1 rounded-lg text-xs font-bold text-white transition hover:opacity-90"
+                           style="background:#7c3aed">View Shifts</a>
+                        @endif
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @endif
+
             {{-- Upcoming Approved Shifts --}}
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
@@ -106,7 +145,13 @@
                     </div>
                     
                     <div class="flex-shrink-0">
-                        @if(isset($activeCheckIns) && $activeCheckIns->has($req->shift_id))
+                        @if(in_array($req->shift_id, $completedShiftIds ?? []))
+                            {{-- Shift is fully completed & hours approved --}}
+                            <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold" style="background:#d1fae5;color:#065f46">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                Completed
+                            </span>
+                        @elseif(isset($activeCheckIns) && $activeCheckIns->has($req->shift_id))
                             <form action="{{ route('volunteer.attendance.check-out', $activeCheckIns->get($req->shift_id)->id) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm transition hover:opacity-90 whitespace-nowrap" style="background:#ea580c">
@@ -270,8 +315,11 @@
                     <div class="px-5 py-3 flex items-center justify-between gap-2">
                         <div class="min-w-0">
                             <p class="text-sm font-semibold text-slate-900 truncate">
-                                {{ $req->shift?->title ?? ($req->campaign?->title ?? 'Legacy request') }}
+                                {{ $req->shift?->event?->title ?? $req->shift?->title ?? ($req->campaign?->title ?? 'Legacy request') }}
                             </p>
+                            @if($req->shift?->event?->title && $req->shift?->title)
+                            <p class="text-xs text-slate-500 truncate">{{ $req->shift->title }}</p>
+                            @endif
                             <p class="text-xs text-slate-400">{{ $req->created_at->format('M d, Y') }}</p>
                         </div>
                         @php

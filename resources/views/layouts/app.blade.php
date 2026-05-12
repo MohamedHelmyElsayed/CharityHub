@@ -70,8 +70,8 @@
                 <a href="{{ route('campaigns.index') }}" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors {{ request()->routeIs('campaigns*') ? 'text-blue-600' : '' }}">
                     Campaigns
                 </a>
-                <a href="{{ route('volunteer.index') }}" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors {{ request()->routeIs('volunteer*') ? 'text-blue-600' : '' }}">
-                    Volunteer
+                <a href="{{ route('volunteering.index') }}" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors {{ request()->routeIs('volunteering*') ? 'text-blue-600' : '' }}">
+                    Volunteering
                 </a>
                 <a href="{{ route('impact.index') }}" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors {{ request()->routeIs('impact*') ? 'text-blue-600' : '' }}">
                     Impact
@@ -163,7 +163,7 @@
                 <h4 class="text-slate-900 font-bold mb-6">Platform</h4>
                 <ul class="space-y-3 text-sm font-medium">
                     <li><a href="{{ route('campaigns.index') }}" class="text-slate-500 hover:text-blue-600 transition-colors">Explore Campaigns</a></li>
-                    <li><a href="{{ route('volunteer.index') }}" class="text-slate-500 hover:text-blue-600 transition-colors">Become a Volunteer</a></li>
+                    <li><a href="{{ route('volunteering.index') }}" class="text-slate-500 hover:text-blue-600 transition-colors">Volunteering Opportunities</a></li>
                     <li><a href="{{ route('impact.index') }}" class="text-slate-500 hover:text-blue-600 transition-colors">Impact Reports</a></li>
                     <li><a href="{{ route('donate') }}" class="text-slate-500 hover:text-blue-600 transition-colors">Make a Donation</a></li>
                 </ul>
