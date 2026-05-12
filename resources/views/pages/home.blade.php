@@ -31,10 +31,12 @@
             </p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-5 pt-4">
+                @if(!(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isEmployee())))
                 <a href="{{ route('donate') }}"
                    class="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white font-semibold rounded-2xl hover:bg-blue-600 shadow-xl shadow-slate-900/10 hover:shadow-blue-500/25 transform hover:-translate-y-1 transition-all duration-300">
                     Make a Donation
                 </a>
+                @endif
                 <a href="{{ route('campaigns.index') }}"
                    class="w-full sm:w-auto px-8 py-4 bg-white border border-slate-200 text-slate-700 font-semibold rounded-2xl hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all duration-300">
                     Explore Campaigns

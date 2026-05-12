@@ -32,10 +32,15 @@
                class="{{ request()->routeIs('custom_admin.volunteers.*') ? 'bg-violet-50 text-violet-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold' }} block px-4 py-2.5 rounded-lg text-sm transition flex items-center justify-between">
                 <span>Volunteers</span>
             </a>
-            <a href="{{ route('custom_admin.schedules.index') }}"
-               class="{{ request()->routeIs('custom_admin.schedules.*') ? 'bg-violet-50 text-violet-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold' }} block px-4 py-2.5 rounded-lg text-sm transition">
-                Volunteer Opportunities
-            </a>
+            <div class="flex items-center justify-between {{ request()->routeIs('custom_admin.schedules.*') ? 'bg-violet-50 text-violet-700' : 'text-gray-600 hover:bg-gray-50' }} rounded-lg transition">
+                <a href="{{ route('custom_admin.schedules.index') }}"
+                   class="flex-1 px-4 py-2.5 text-sm font-semibold">
+                    Volunteer Opportunities
+                </a>
+                <a href="{{ route('volunteering.index') }}" target="_blank" class="mr-3 text-[10px] bg-white border border-gray-200 px-1.5 py-0.5 rounded shadow-sm hover:bg-gray-50 text-gray-400 hover:text-gray-600" title="View Public Page">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                </a>
+            </div>
             <a href="{{ route('custom_admin.volunteer-slots.index') }}"
                class="{{ request()->routeIs('custom_admin.volunteer-slots.*') ? 'bg-violet-50 text-violet-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold' }} block px-4 py-2.5 rounded-lg text-sm transition">
                 Slot Requests

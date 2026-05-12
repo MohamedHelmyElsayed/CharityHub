@@ -155,42 +155,49 @@
         <div class="space-y-5">
 
             {{-- Apply CTA --}}
-            <div class="rounded-2xl p-6 text-white shadow-lg" style="background:linear-gradient(135deg,#7c3aed,#2563eb)">
-                <h3 class="font-black text-lg mb-2">Ready to Help?</h3>
-                <p class="text-sm text-white/80 mb-5">Apply now and make a real difference in your community.</p>
+            @if(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isEmployee()))
+                <div class="rounded-2xl p-6 bg-slate-100 border border-slate-200 shadow-sm">
+                    <h3 class="font-black text-lg text-slate-800 mb-2">Admin View</h3>
+                    <p class="text-sm text-slate-500 mb-0">You are viewing this as an administrator. Admins and employees cannot apply for volunteering roles.</p>
+                </div>
+            @else
+                <div class="rounded-2xl p-6 text-white shadow-lg" style="background:linear-gradient(135deg,#7c3aed,#2563eb)">
+                    <h3 class="font-black text-lg mb-2">Ready to Help?</h3>
+                    <p class="text-sm text-white/80 mb-5">Apply now and make a real difference in your community.</p>
 
-                @if($userApplication)
-                    @if($userApplication->status === 'approved')
-                        <div class="rounded-xl p-3 text-center font-bold text-sm" style="background:rgba(255,255,255,.15)">
-                            ✓ You're approved for this opportunity!
-                        </div>
-                    @elseif($userApplication->status === 'pending')
-                        <div class="rounded-xl p-3 text-center font-bold text-sm" style="background:rgba(255,255,255,.15)">
-                            ⏳ Application under review
-                        </div>
+                    @if($userApplication)
+                        @if($userApplication->status === 'approved')
+                            <div class="rounded-xl p-3 text-center font-bold text-sm" style="background:rgba(255,255,255,.15)">
+                                ✓ You're approved for this opportunity!
+                            </div>
+                        @elseif($userApplication->status === 'pending')
+                            <div class="rounded-xl p-3 text-center font-bold text-sm" style="background:rgba(255,255,255,.15)">
+                                ⏳ Application under review
+                            </div>
+                        @else
+                            <div class="rounded-xl p-3 text-center font-bold text-sm" style="background:rgba(220,38,38,.3)">
+                                Application not approved
+                            </div>
+                        @endif
+                    @elseif($opportunity->status === 'open' && (!$opportunity->registration_deadline || now()->lt($opportunity->registration_deadline)))
+                        <a href="{{ route('volunteering.apply', $opportunity->slug) }}"
+                           class="block w-full text-center py-3 rounded-xl font-bold text-sm transition hover:opacity-90"
+                           style="background:#fff;color:#7c3aed">
+                            Apply Now &rarr;
+                        </a>
                     @else
-                        <div class="rounded-xl p-3 text-center font-bold text-sm" style="background:rgba(220,38,38,.3)">
-                            Application not approved
+                        <div class="rounded-xl p-3 text-center font-bold text-sm" style="background:rgba(255,255,255,.15)">
+                            Applications Closed
                         </div>
                     @endif
-                @elseif($opportunity->status === 'open' && (!$opportunity->registration_deadline || now()->lt($opportunity->registration_deadline)))
-                    <a href="{{ route('volunteering.apply', $opportunity->slug) }}"
-                       class="block w-full text-center py-3 rounded-xl font-bold text-sm transition hover:opacity-90"
-                       style="background:#fff;color:#7c3aed">
-                        Apply Now &rarr;
-                    </a>
-                @else
-                    <div class="rounded-xl p-3 text-center font-bold text-sm" style="background:rgba(255,255,255,.15)">
-                        Applications Closed
-                    </div>
-                @endif
 
-                @guest
-                <p class="text-xs text-white/60 text-center mt-3">
-                    <a href="{{ route('login') }}" class="underline">Log in</a> to apply
-                </p>
-                @endguest
-            </div>
+                    @guest
+                    <p class="text-xs text-white/60 text-center mt-3">
+                        <a href="{{ route('login') }}" class="underline">Log in</a> to apply
+                    </p>
+                    @endguest
+                </div>
+            @endif
 
             {{-- Key Info Card --}}
             <div class="info-card space-y-4">

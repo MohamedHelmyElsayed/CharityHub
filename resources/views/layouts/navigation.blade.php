@@ -21,11 +21,9 @@
                     <x-nav-link :href="route('campaigns.index')" :active="request()->routeIs('campaigns.*')">
                         {{ __('Campaigns') }}
                     </x-nav-link>
-                    @if(auth()->guest() || (auth()->check() && auth()->user()->role === 'user'))
-                    <x-nav-link :href="route('volunteer.index')" :active="request()->routeIs('volunteer.index')">
+                    <x-nav-link :href="route('volunteering.index')" :active="request()->routeIs('volunteering.index')">
                         {{ __('Volunteer') }}
                     </x-nav-link>
-                    @endif
                     @auth
                         @if(auth()->user()->role !== 'user')
                             <x-nav-link :href="route('custom_admin.dashboard')" :active="request()->routeIs('custom_admin.*')">
@@ -39,7 +37,7 @@
             <!-- Right Side -->
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-4">
                 @auth
-                    @if(auth()->user()->role === 'user')
+                    @if(!(auth()->user()->isAdmin() || auth()->user()->isEmployee()))
                     <a href="{{ route('donate') }}" 
                        class="text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 px-5 py-2.5 rounded-xl shadow-lg shadow-primary-500/20 transition transform hover:-translate-y-0.5">
                         Donate Now
@@ -100,11 +98,9 @@
             <x-responsive-nav-link :href="route('campaigns.index')" :active="request()->routeIs('campaigns.*')">
                 {{ __('Campaigns') }}
             </x-responsive-nav-link>
-            @if(auth()->guest() || (auth()->check() && auth()->user()->role === 'user'))
-            <x-responsive-nav-link :href="route('volunteer.index')" :active="request()->routeIs('volunteer.index')">
+            <x-responsive-nav-link :href="route('volunteering.index')" :active="request()->routeIs('volunteering.index')">
                 {{ __('Volunteer') }}
             </x-responsive-nav-link>
-            @endif
         </div>
 
         <!-- Responsive Settings Options -->

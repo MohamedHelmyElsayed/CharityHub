@@ -74,7 +74,7 @@
                         <h4 class="font-bold text-slate-900">Goal Reached!</h4>
                         <p class="text-sm text-slate-500 mt-1">This campaign is fully funded and closed to new donations.</p>
                     </div>
-                @else
+                @elseif(!(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isEmployee())))
                     <a href="{{ route('donate') }}?campaign_id={{ $campaign->id }}"
                        class="block w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white text-center font-bold rounded-xl transition-all shadow-md hover:shadow-emerald-200 mt-6">
                         Donate to This Campaign

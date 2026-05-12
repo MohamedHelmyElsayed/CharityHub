@@ -67,89 +67,50 @@
             <div class="flex justify-between items-center h-20">
                 {{-- Logo --}}
                 <a href="{{ route('home') }}" class="flex items-center space-x-3 group">
-                    <div
-                        class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 group-hover:-translate-y-0.5 transition-all duration-300">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path
-                                d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z" />
-                        </svg>
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 group-hover:-translate-y-0.5 transition-all duration-300">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z" /></svg>
                     </div>
                     <span class="text-2xl font-bold tracking-tight text-slate-900">CharityHub</span>
                 </a>
 
-                {{-- Desktop Navigation --}}
+                {{-- Navigation Links (Desktop) --}}
                 <div class="hidden md:flex items-center space-x-10">
-                    <a href="{{ route('campaigns.index') }}"
-                        class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors {{ request()->routeIs('campaigns*') ? 'text-blue-600' : '' }}">
-                        Campaigns
-                    </a>
-                    <a href="{{ route('volunteering.index') }}"
-                        class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors {{ request()->routeIs('volunteering*') ? 'text-blue-600' : '' }}">
-                        Volunteering
-                    </a>
-                    <a href="{{ route('impact.index') }}"
-                        class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors {{ request()->routeIs('impact*') ? 'text-blue-600' : '' }}">
-                        Impact
-                    </a>
+                    <a href="{{ route('campaigns.index') }}" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors {{ request()->routeIs('campaigns*') ? 'text-blue-600' : '' }}">Campaigns</a>
+                    <a href="{{ route('volunteering.index') }}" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors {{ request()->routeIs('volunteering*') ? 'text-blue-600' : '' }}">Volunteering</a>
+                    <a href="{{ route('impact.index') }}" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors {{ request()->routeIs('impact*') ? 'text-blue-600' : '' }}">Impact</a>
                 </div>
 
                 {{-- Right Actions --}}
-                <div class="flex items-center space-x-6">
+                <div class="flex items-center space-x-4 md:space-x-6">
                     @auth
                         @if(auth()->user()->isAdmin() || auth()->user()->isEmployee())
-                            <a href="{{ route('custom_admin.dashboard') }}"
-                                class="text-slate-600 hover:text-blue-600 text-sm font-semibold transition-colors">
-                                Admin Panel
-                            </a>
+                            <a href="{{ route('custom_admin.dashboard') }}" class="hidden sm:block text-slate-600 hover:text-blue-600 text-sm font-semibold transition-colors">Admin Panel</a>
                         @endif
                         <div class="relative group">
-                            <button
-                                class="flex items-center space-x-2 text-slate-700 hover:text-blue-600 font-semibold text-sm transition-colors focus:outline-none">
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=EFF6FF&color=1D4ED8"
-                                    alt="Avatar" class="w-8 h-8 rounded-full border border-slate-200">
-                                <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7" />
-                                </svg>
+                            <button class="flex items-center space-x-2 text-slate-700 hover:text-blue-600 font-semibold text-sm transition-colors focus:outline-none">
+                                <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=EFF6FF&color=1D4ED8" alt="Avatar" class="w-8 h-8 rounded-full border border-slate-200">
+                                <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                             </button>
-                            <div
-                                class="absolute right-0 pt-3 w-56 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 transform origin-top-right scale-95 group-hover:scale-100 z-50">
+                            <div class="absolute right-0 pt-3 w-56 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 transform origin-top-right scale-95 group-hover:scale-100 z-50">
                                 <div class="bg-white rounded-2xl shadow-xl border border-slate-100 py-2">
                                     <div class="px-4 py-3 border-b border-slate-100">
-                                        <p class="text-sm leading-5 font-medium text-slate-900 truncate">
-                                            {{ auth()->user()->name }}</p>
-                                        <p class="text-xs leading-5 font-medium text-slate-500 truncate">
-                                            {{ auth()->user()->email }}</p>
+                                        <p class="text-sm leading-5 font-medium text-slate-900 truncate">{{ auth()->user()->name }}</p>
+                                        <p class="text-xs leading-5 font-medium text-slate-500 truncate">{{ auth()->user()->email }}</p>
                                     </div>
-                                    <a href="{{ route('dashboard') }}"
-                                        class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                                        My Dashboard
-                                    </a>
-                                    <a href="{{ route('user.profile') }}"
-                                        class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                        Account Profile
-                                    </a>
+                                    <a href="{{ route('dashboard') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors flex items-center gap-2"><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>My Dashboard</a>
+                                    <a href="{{ route('user.profile') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors flex items-center gap-2"><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Account Profile</a>
                                     <div class="border-t border-slate-100 my-1"></div>
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit"
-                                            class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">Sign
-                                            out</button>
-                                    </form>
+                                    <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">Sign out</button></form>
                                 </div>
                             </div>
                         </div>
                     @else
-                        <a href="{{ route('login') }}"
-                            class="text-slate-600 hover:text-blue-600 font-semibold text-sm transition-colors">Sign in</a>
+                        <a href="{{ route('login') }}" class="text-slate-600 hover:text-blue-600 font-semibold text-sm transition-colors">Sign in</a>
                     @endauth
-                    <a href="{{ route('donate') }}"
-                        class="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-semibold text-sm hover:bg-blue-600 transform hover:-translate-y-0.5 transition-all duration-300 shadow-md hover:shadow-blue-500/30">
-                        Donate Now
-                    </a>
+                    
+                    @if(!(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isEmployee())))
+                    <a href="{{ route('donate') }}" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-semibold text-sm hover:bg-blue-600 transform hover:-translate-y-0.5 transition-all duration-300 shadow-md hover:shadow-blue-500/30">Donate Now</a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -230,8 +191,10 @@
                                 Opportunities</a></li>
                         <li><a href="{{ route('impact.index') }}"
                                 class="text-slate-500 hover:text-blue-600 transition-colors">Impact Reports</a></li>
+                        @if(!(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isEmployee())))
                         <li><a href="{{ route('donate') }}"
                                 class="text-slate-500 hover:text-blue-600 transition-colors">Make a Donation</a></li>
+                        @endif
                     </ul>
                 </div>
                 <div>
