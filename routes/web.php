@@ -59,9 +59,14 @@ Route::get('/donate/success', [DonationController::class, 'success'])->name('don
 Route::get('/donate/cancel', [DonationController::class, 'cancel'])->name('donate.cancel');
 
 // ─── Certificate Verification ────────────────────────────────────────────────
+Route::get('/verify', [CertificateController::class, 'index'])->name('verify.index');
 Route::get('/verify/{uuid}', [CertificateController::class, 'verify'])->name('verify.certificate');
 Route::get('/certificates/{uuid}/download', [CertificateController::class, 'download'])
     ->name('certificates.download');
+
+// ─── Static Pages ────────────────────────────────────────────────────────────
+Route::get('/privacy', fn() => view('pages.privacy'))->name('privacy');
+Route::get('/terms', fn() => view('pages.terms'))->name('terms');
 
 // ─── Volunteering Opportunities (new public system) ──────────────────────────
 Route::get('/volunteering', [VolunteerController::class, 'opportunities'])->name('volunteering.index');
@@ -81,7 +86,7 @@ Route::post('/volunteer/hours', [VolunteerController::class, 'logHours'])->name(
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/volunteer/shifts/request', [\App\Http\Controllers\Volunteer\ShiftRequestController::class, 'store'])->name('volunteer.shifts.request');
     Route::patch('/volunteer/shifts/requests/{slotRequest}/cancel', [\App\Http\Controllers\Volunteer\ShiftRequestController::class, 'cancel'])->name('volunteer.shifts.requests.cancel');
-    
+
     // Self Check-in / Check-out
     Route::post('/volunteer/attendance/check-in', [\App\Http\Controllers\Volunteer\AttendanceController::class, 'selfCheckIn'])->name('volunteer.attendance.check-in');
     Route::post('/volunteer/attendance/{log}/check-out', [\App\Http\Controllers\Volunteer\AttendanceController::class, 'selfCheckOut'])->name('volunteer.attendance.check-out');
@@ -96,7 +101,7 @@ Route::get('/dashboard', function () {
     if (auth()->user()->isAdmin() || auth()->user()->isEmployee()) {
         return redirect()->route('custom_admin.dashboard');
     }
-    
+
     // Check if user has a volunteer profile, otherwise go to user dashboard
     if (auth()->user()->volunteer) {
         return redirect()->route('volunteer.dashboard');
@@ -105,7 +110,13 @@ Route::get('/dashboard', function () {
     return redirect()->route('user.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/my-dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard')->middleware(['auth', 'verified']);
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/my-dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
+    Route::get('/my-profile', [UserDashboardController::class, 'profile'])->name('user.profile');
+    Route::put('/my-profile', [UserDashboardController::class, 'updateProfile'])->name('user.profile.update');
+    Route::put('/my-profile/password', [UserDashboardController::class, 'updatePassword'])->name('user.profile.password');
+    Route::delete('/my-profile', [UserDashboardController::class, 'deleteAccount'])->name('user.profile.delete');
+});
 
 // ─── Donor Dashboard & Subscription Management ──────────────────────────────
 Route::middleware(['auth', 'verified'])->prefix('donor')->name('donor.')->group(function () {
@@ -123,11 +134,11 @@ Route::get('/impact/{report:slug}/pdf', [ImpactReportController::class, 'downloa
 Route::post('/stripe/webhook', [DonationController::class, 'webhook'])->name('stripe.webhook');
 
 // ─── Admin Routes (blade-based, supplemental to Filament panel) ──────────────
-Route::get('/admin/filament-dashboard-alias', function() {
+Route::get('/admin/filament-dashboard-alias', function () {
     return redirect()->route('custom_admin.dashboard');
 })->name('filament.admin.pages.dashboard')->middleware(['auth', 'role:admin,employee']);
 
-Route::get('/admin/filament-donors-alias', function() {
+Route::get('/admin/filament-donors-alias', function () {
     return redirect()->route('custom_admin.donors');
 })->name('filament.admin.resources.donors.index')->middleware(['auth', 'role:admin,employee']);
 
@@ -152,12 +163,12 @@ Route::prefix('admin')->name('custom_admin.')->middleware(['auth', 'role:admin,e
     Route::get('/manage-donations', [\App\Http\Controllers\Admin\DonationController::class, 'index'])->name('donations.index');
     Route::get('/manage-donations/{id}', [\App\Http\Controllers\Admin\DonationController::class, 'show'])->name('donations.show');
     Route::post('/manage-donations/{id}/refund', [\App\Http\Controllers\Admin\DonationController::class, 'refund'])->name('donations.refund');
-    
+
     // Donors (Renamed URL to avoid Filament conflict)
     // Route::get('/manage-donors', [\App\Http\Controllers\Admin\DonorController::class, 'index'])->name('donors.index');
     // Route::get('/manage-donors/{id}', [\App\Http\Controllers\Admin\DonorController::class, 'show'])->name('donors.show');
 
-    
+
     // Volunteers Management (Renamed URL to avoid Filament conflict)
     Route::get('/manage-volunteers', [\App\Http\Controllers\Admin\VolunteerController::class, 'index'])->name('volunteers.index');
     Route::get('/manage-volunteers/{id}', [\App\Http\Controllers\Admin\VolunteerController::class, 'show'])->name('volunteers.show');
