@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="SUT.png" width="400" alt="CharityHub Logo">
+</p>
+
 # CharityHub 🌍
 
 **CharityHub** is a comprehensive, modern fundraising and volunteer management platform designed to streamline non-profit operations, enhance donor engagement, and ensure financial transparency.
