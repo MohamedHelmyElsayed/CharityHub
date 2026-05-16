@@ -99,11 +99,13 @@ For more detailed technical information, please refer to the files in the `Docum
 
 ## 👥 Contributors
 
-*   **Mohamed Helmy** - *Lead Developer*
-*   [Your Team Members Here]
+*   **Mohamed Helmy Elsayed**
+*   **Amir Khaled Yousif**
+*   **Mostafa Salah Eldin Ali**
+*   **Mahmoud Mohamed Mahmoud**
 
 ---
 
 ## 📄 License
 
-The CharityHub platform is open-sourced software licensed under the [MIT license](LICENSE).
+The CharityHub platform is open-sourced software licensed under the [SUT license](LICENSE).
