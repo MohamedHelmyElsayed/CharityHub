@@ -1,59 +1,109 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# CharityHub 🌍
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**CharityHub** is a comprehensive, modern fundraising and volunteer management platform designed to streamline non-profit operations, enhance donor engagement, and ensure financial transparency.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Key Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 💰 Fundraising & Donations
+*   **Flexible Donations**: Support for one-time and recurring donations (Monthly/Yearly).
+*   **Integrated Payment Gateways**: Secure processing via **Stripe** and **Paymob**.
+*   **Donor Dashboard**: Personal portal for donors to manage subscriptions, view history, and download tax certificates.
+*   **Anonymous Giving**: Option for donors to hide their identity from public lists.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 🤝 Volunteer Management
+*   **Opportunity Portal**: Public-facing list of volunteering events and opportunities.
+*   **Application Workflow**: Multi-step application and approval process for volunteers.
+*   **Shift Tracking**: Integrated shift management with conflict detection (`ShiftConflictService`).
+*   **Attendance & Hours**: Real-time check-in/out and automated hours processing.
 
-## Learning Laravel
+### 📊 Operations & Transparency
+*   **Immutable Ledger**: An append-only financial audit trail secured with SHA-256 HMAC hashing to prevent tampering.
+*   **Impact Reporting**: Detailed reports with **Google Maps** integration to visualize beneficiary locations.
+*   **GDPR Compliance**: Built-in tools for data portability, consent tracking, and the "right to be forgotten."
+*   **Automated Notifications**: Real-time updates for donation confirmations, volunteer approvals, and shift reminders.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ Technical Stack
 
-## Laravel Sponsors
+*   **Framework**: [Laravel 11](https://laravel.com)
+*   **Frontend**: Vanilla CSS, Blade Templates, Tailwind CSS
+*   **Database**: MySQL / MariaDB
+*   **Payments**: Stripe API, Paymob API
+*   **Maps**: Google Maps JavaScript API
+*   **Authentication**: Laravel Fortify / Breeze (Customized)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## ⚙️ Installation & Setup
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Prerequisites
+*   PHP 8.2+
+*   Composer
+*   Node.js & NPM
+*   MySQL/MariaDB
 
-## Contributing
+### Steps
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/your-repo/CharityHub.git
+    cd CharityHub
+    ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+2.  **Install dependencies**:
+    ```bash
+    composer install
+    npm install
+    npm run build
+    ```
 
-## Code of Conduct
+3.  **Environment Setup**:
+    ```bash
+    cp .env.example .env
+    php artisan key:generate
+    ```
+    *Update `.env` with your database and API credentials (Stripe, Paymob, Google Maps).*
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+4.  **Database Migration**:
+    ```bash
+    php artisan migrate --seed
+    ```
 
-## Security Vulnerabilities
+5.  **Run the application**:
+    ```bash
+    php artisan serve
+    ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## 🛡️ Security & Compliance
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+CharityHub is built with security as a top priority:
+*   **Financial Integrity**: All financial logs are signed with HMAC hashes. Any tampering is immediately flagged in the Admin Ledger.
+*   **Data Privacy**: Full GDPR compliance suite including encrypted data storage and consent management.
+*   **PCI-DSS Compliance**: No sensitive card data touches our servers; all payments are tokenized via Stripe/Paymob.
+
+---
+
+## 📄 Documentation
+
+For more detailed technical information, please refer to the files in the `Documentations/md Files/` directory:
+*   [Core Documentation](Documentations/md%20Files/DOCUMENTATION.md)
+*   [Volunteer System Architecture](Documentations/md%20Files/VOLUNTEER_SYSTEM_ARCHITECTURE.md)
+*   [Payment Flow Details](Documentations/md%20Files/payment-flow.md)
+*   [Database Schema](Documentations/md%20Files/database-schema.md)
+
+---
+
+## 👥 Contributors
+
+*   **Mohamed Helmy** - *Lead Developer*
+*   [Your Team Members Here]
+
+---
+
+## 📄 License
+
+The CharityHub platform is open-sourced software licensed under the [MIT license](LICENSE).
